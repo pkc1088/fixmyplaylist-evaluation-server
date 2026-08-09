@@ -20,8 +20,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RecoveryCaseRetriever implements RetrieveReferenceCasePort {
 
-    private final InMemoryEmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
     private final List<RecoveryCase> referenceCases = new ArrayList<>();
+    private final InMemoryEmbeddingStore<TextSegment> embeddingStore;
     private final EmbeddingModel embeddingModel;
 
 

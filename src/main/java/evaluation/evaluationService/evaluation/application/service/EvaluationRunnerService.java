@@ -15,14 +15,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -39,7 +36,7 @@ public class EvaluationRunnerService implements RunEvaluationUseCase {
 
         List<RecoveryCase> allCases;
         try {
-            List<RecoveryCase> readCases = loadRecoveryCasePort.read(Path.of("data/recovery_cases.csv"));
+            List<RecoveryCase> readCases = loadRecoveryCasePort.read();
             allCases = new ArrayList<>(readCases);
 
         } catch(IOException | CsvException e) {
@@ -48,7 +45,7 @@ public class EvaluationRunnerService implements RunEvaluationUseCase {
             return;
         }
 
-        Collections.shuffle(allCases, new Random(44));
+        Collections.shuffle(allCases, new Random(18));
 
         List<RecoveryCase> reference = allCases.subList(0, 250);
         List<RecoveryCase> test = allCases.subList(250, 255);// (250, 350);
@@ -58,18 +55,25 @@ public class EvaluationRunnerService implements RunEvaluationUseCase {
         ExecutorService executor = Executors.newFixedThreadPool(3);//(20);
 
         try {
-            List<CompletableFuture<EvaluationOutput>> futures = test.stream()
-                    .map(testCase ->
-                            CompletableFuture.supplyAsync(
-                                    () -> processSingleCase(testCase),
-                                    executor
-                            )
+            List<CompletableFuture<Optional<EvaluationOutput>>> futures = test.stream()
+                    .map(testCase -> CompletableFuture.supplyAsync(() -> processSingleCase(testCase), executor)
+                            .orTimeout(30, TimeUnit.SECONDS)
+                            .exceptionally(throwable -> {
+                                log.error("케이스 평가 타임아웃 또는 에러 - id: {}, 사유: {}", testCase.id(), throwable.getMessage());
+                                return Optional.empty();
+                            })
                     )
                     .toList();
 
             List<EvaluationOutput> results = futures.stream()
                     .map(CompletableFuture::join)
+                    .flatMap(Optional::stream)
                     .toList();
+
+            int failedCount = test.size() - results.size();
+            if (failedCount > 0) {
+                log.warn("{}건 중 {}건 평가 실패, {}건만 저장.", test.size(), failedCount, results.size());
+            }
 
             saveRecoveryCasePort.exportResults(results);
 
@@ -81,20 +85,27 @@ public class EvaluationRunnerService implements RunEvaluationUseCase {
         }
     }
 
-    private EvaluationOutput processSingleCase(RecoveryCase testCase) {
+    private Optional<EvaluationOutput> processSingleCase(RecoveryCase testCase) {
+        try {
+            log.info("케이스 평가 시작 - id: {}", testCase.id());
 
-        EvaluationResult zeroShot = evaluateRecoveryPort.evaluateZeroShot(testCase);
+            EvaluationResult zeroShot = evaluateRecoveryPort.evaluateZeroShot(testCase);
 
-        List<RetrievedCase> similarCases = retrieveReferenceCasePort.retrieve(testCase, 5);
+            List<RetrievedCase> similarCases = retrieveReferenceCasePort.retrieve(testCase, 5);
 
-        EvaluationResult rag = evaluateRecoveryPort.evaluateWithRag(testCase, similarCases);
+            EvaluationResult rag = evaluateRecoveryPort.evaluateWithRag(testCase, similarCases);
 
-        return EvaluationOutput.from(
-                testCase,
-                zeroShot,
-                rag,
-                similarCases
-        );
+            return Optional.of(EvaluationOutput.from(
+                    testCase,
+                    zeroShot,
+                    rag,
+                    similarCases
+            ));
+
+        } catch (Exception e) {
+            log.error("케이스 평가 실패 - id: {}, 사유: {}", testCase.id(), e.getMessage(), e);
+            return Optional.empty();
+        }
     }
 }
 

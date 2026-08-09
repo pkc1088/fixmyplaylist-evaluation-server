@@ -20,7 +20,7 @@ public class RecoveryCaseCsvWriter implements SaveRecoveryCasePort {
 
     public void exportResults(List<EvaluationOutput> results) throws IOException {
 
-        Path outputPath = Path.of("data/evaluation_results.csv");
+        Path outputPath = Path.of("data/evaluation_two_results.csv");
         boolean fileExistsAndNotEmpty = Files.exists(outputPath) && Files.size(outputPath) > 0;
 
         try (
@@ -39,12 +39,10 @@ public class RecoveryCaseCsvWriter implements SaveRecoveryCasePort {
 
                         "zero_shot_label",
                         "zero_shot_confidence",
-                        "zero_shot_reason",
                         "zero_shot_correct",
 
                         "rag_label",
                         "rag_confidence",
-                        "rag_reason",
                         "rag_correct",
 
                         "retrieved_case_ids"
@@ -58,12 +56,10 @@ public class RecoveryCaseCsvWriter implements SaveRecoveryCasePort {
                         result.humanLabel().name(),
                         result.zeroShotLabel().name(),
                         String.valueOf(result.zeroShotConfidence()),
-                        result.zeroShotReason(),
                         String.valueOf(result.humanLabel() == result.zeroShotLabel()),
 
                         result.ragLabel().name(),
                         String.valueOf(result.ragConfidence()),
-                        result.ragReason(),
                         String.valueOf(result.humanLabel() == result.ragLabel()),
 
                         String.join("|", result.retrievedCaseInfo())

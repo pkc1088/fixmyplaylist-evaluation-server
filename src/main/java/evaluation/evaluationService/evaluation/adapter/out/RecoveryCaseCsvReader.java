@@ -17,9 +17,11 @@ import com.opencsv.CSVReader;
 @Component
 public class RecoveryCaseCsvReader implements LoadRecoveryCasePort {
 
-    public List<RecoveryCase> read(Path path) throws IOException, CsvException {
+    public List<RecoveryCase> read() throws IOException, CsvException {
 
-        try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8);
+        Path inputPath = Path.of("data/recovery_cases_two.csv");
+
+        try (Reader reader = Files.newBufferedReader(inputPath, StandardCharsets.UTF_8);
             CSVReader csvReader = new CSVReader(reader)) {
 
             List<String[]> rows = csvReader.readAll();
