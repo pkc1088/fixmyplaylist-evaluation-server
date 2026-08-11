@@ -34,7 +34,9 @@ env.yml
 docker-compose.yml
 docker-compose-multi-instance.yml
 evaluation_results.csv
+evaluation_two_results.csv
 recovery_cases.csv
+recovery_cases_two.csv
 
 ### NetBeans ###
 /nbproject/private/

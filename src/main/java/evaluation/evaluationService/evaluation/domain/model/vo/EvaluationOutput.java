@@ -10,11 +10,9 @@ public record EvaluationOutput(
 
         HumanLabel zeroShotLabel,
         double zeroShotConfidence,
-        String zeroShotReason,
 
         HumanLabel ragLabel,
         double ragConfidence,
-        String ragReason,
 
         List<String> retrievedCaseInfo
 ) {
@@ -31,15 +29,12 @@ public record EvaluationOutput(
 
                 zeroShot.label(),
                 zeroShot.confidence(),
-                zeroShot.reason(),
 
                 rag.label(),
                 rag.confidence(),
-                rag.reason(),
 
                 retrievedCases.stream()
                         .map(rc -> String.format("%s (%.4f)", rc.recoveryCase().id(), rc.score()))
-                        //.map(RecoveryCase::id)
                         .toList()
         );
     }

@@ -25,21 +25,45 @@ public class GeminiEvaluator implements EvaluateRecoveryPort {
     }
 
     interface JudgeAiService {
-        @SystemMessage("You are a strict evaluator for YouTube playlist recoveries. You must return ONLY a JSON object with 'label' (SUCCESS, ACCEPTABLE, or FAIL), 'confidence' (float), and 'reason' (string).")
+        @SystemMessage("""
+                You are a strict evaluator for YouTube music recoveries.
+                You must return ONLY a JSON object with 'label' (SUCCESS or FAIL), 'confidence' (float).
+                
+                CRITICAL RULES FOR JSON FIELDS:
+                1. 'label': Must be exactly "SUCCESS" or "FAIL". You MUST always select one.
+                    - SUCCESS: The recovered video is an appropriate replacement.
+                    - FAIL: The recovered video is not an appropriate replacement.
+                
+                2. 'confidence': Must be a float strictly between 0.0 and 1.0. It represents how confident you are that the selected 'label' is correct.
+                    - 0.9–1.0: Very high confidence; the evidence strongly supports the selected label.
+                    - 0.7–0.89: High confidence; the selected label is well supported, with minor uncertainty.
+                    - 0.4–0.69: Moderate confidence; the selected label is plausible, but significant uncertainty remains.
+                    - 0.0–0.39: Low confidence; the evidence is insufficient to confidently distinguish between SUCCESS and FAIL.
+                """)
         @UserMessage("""
                 Target video: {{target}}
                 Recovered video: {{source}}
-                
-                SUCCESS: The recovered video is an appropriate replacement.
-                ACCEPTABLE: The recovered video is related and usable, but is not an ideal replacement.
-                FAIL: The recovered video is not an appropriate replacement.
                 """)
         EvaluationResult evaluateZeroShot(
                 @V("target") String target,
                 @V("source") String source
         );
 
-        @SystemMessage("You are a strict evaluator for YouTube playlist recoveries. You must return ONLY a JSON object with 'label' (SUCCESS, ACCEPTABLE, or FAIL), 'confidence' (float), and 'reason' (string).")
+        @SystemMessage("""
+                You are a strict evaluator for YouTube music recoveries.
+                You must return ONLY a JSON object with 'label' (SUCCESS or FAIL), 'confidence' (float).
+                
+                CRITICAL RULES FOR JSON FIELDS:
+                1. 'label': Must be exactly "SUCCESS" or "FAIL". You MUST always select one.
+                    - SUCCESS: The recovered video is an appropriate replacement.
+                    - FAIL: The recovered video is not an appropriate replacement.
+                
+                2. 'confidence': Must be a float strictly between 0.0 and 1.0. It represents how confident you are that the selected 'label' is correct.
+                    - 0.9–1.0: Very high confidence; the evidence strongly supports the selected label.
+                    - 0.7–0.89: High confidence; the selected label is well supported, with minor uncertainty.
+                    - 0.4–0.69: Moderate confidence; the selected label is plausible, but significant uncertainty remains.
+                    - 0.0–0.39: Low confidence; the evidence is insufficient to confidently distinguish between SUCCESS and FAIL.
+                """)
         @UserMessage("""
                 Current recovery:
                 Target video: {{target}}
