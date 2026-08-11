@@ -47,12 +47,12 @@ public class EvaluationRunnerService implements RunEvaluationUseCase {
 
         Collections.shuffle(allCases, new Random(18));
 
-        List<RecoveryCase> reference = allCases.subList(0, 250);
-        List<RecoveryCase> test = allCases.subList(250, 255);// (250, 350);
+        List<RecoveryCase> reference = allCases.subList(0, 245);
+        List<RecoveryCase> test = allCases.subList(245, 345);
 
         retrieveReferenceCasePort.index(reference);
 
-        ExecutorService executor = Executors.newFixedThreadPool(3);//(20);
+        ExecutorService executor = Executors.newFixedThreadPool(10);
 
         try {
             List<CompletableFuture<Optional<EvaluationOutput>>> futures = test.stream()
@@ -103,7 +103,7 @@ public class EvaluationRunnerService implements RunEvaluationUseCase {
             ));
 
         } catch (Exception e) {
-            log.error("케이스 평가 실패 - id: {}, 사유: {}", testCase.id(), e.getMessage(), e);
+            log.error("케이스 평가 실패 - id: {}, 사유: {}", testCase.id(), e.getMessage());
             return Optional.empty();
         }
     }

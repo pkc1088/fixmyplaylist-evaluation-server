@@ -20,7 +20,7 @@ public class RecoveryCaseCsvWriter implements SaveRecoveryCasePort {
 
     public void exportResults(List<EvaluationOutput> results) throws IOException {
 
-        Path outputPath = Path.of("data/evaluation_two_results.csv");
+        Path outputPath = Path.of("data/evaluation_results.csv");
         boolean fileExistsAndNotEmpty = Files.exists(outputPath) && Files.size(outputPath) > 0;
 
         try (

@@ -36,7 +36,7 @@ public class GeminiConfig {
                 .apiKey(apiKey)
                 .modelName("gemini-2.5-flash-lite")
                 .temperature(0.0)
-                .maxOutputTokens(512)
+                .maxOutputTokens(256)
                 .timeout(Duration.ofSeconds(30))
                 .responseFormat(ResponseFormat.JSON)
                 .supportedCapabilities(Capability.RESPONSE_FORMAT_JSON_SCHEMA)
