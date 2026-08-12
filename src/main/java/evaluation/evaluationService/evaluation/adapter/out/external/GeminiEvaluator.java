@@ -1,4 +1,4 @@
-package evaluation.evaluationService.evaluation.adapter.out;
+package evaluation.evaluationService.evaluation.adapter.out.external;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.service.AiServices;
@@ -6,8 +6,9 @@ import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 import evaluation.evaluationService.evaluation.application.port.out.EvaluateRecoveryPort;
-import evaluation.evaluationService.evaluation.domain.model.vo.EvaluationResult;
-import evaluation.evaluationService.evaluation.domain.model.vo.RecoveryCase;
+import evaluation.evaluationService.evaluation.domain.model.EvaluationCase;
+import evaluation.evaluationService.evaluation.domain.model.ReferenceCase;
+import evaluation.evaluationService.evaluation.application.port.out.dto.EvaluationResult;
 import evaluation.evaluationService.evaluation.domain.model.vo.RetrievedCase;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +26,7 @@ public class GeminiEvaluator implements EvaluateRecoveryPort {
     }
 
     interface JudgeAiService {
-        @SystemMessage("""
+/*        @SystemMessage("""
                 You are a strict evaluator for YouTube music recoveries.
                 You must return ONLY a JSON object with 'label' (SUCCESS or FAIL), 'confidence' (float).
                 
@@ -47,7 +48,7 @@ public class GeminiEvaluator implements EvaluateRecoveryPort {
         EvaluationResult evaluateZeroShot(
                 @V("target") String target,
                 @V("source") String source
-        );
+        );*/
 
         @SystemMessage("""
                 You are a strict evaluator for YouTube music recoveries.
@@ -81,37 +82,37 @@ public class GeminiEvaluator implements EvaluateRecoveryPort {
         );
     }
 
-    public EvaluationResult evaluateZeroShot(RecoveryCase testCase) {
+/*    public EvaluationResult evaluateZeroShot(EvaluationCase testCase) {
         return judgeService.evaluateZeroShot(
-                testCase.targetTitle(),
-                testCase.sourceTitle()
+                testCase.getTargetTitle(),
+                testCase.getSourceTitle()
         );
-    }
+    }*/
 
-    public EvaluationResult evaluateWithRag(RecoveryCase testCase, List<RetrievedCase> similarCases) {
+    public EvaluationResult evaluateWithRag(EvaluationCase testCase, List<RetrievedCase> similarCases) {
         String examples = similarCases.stream()
                 .map(this::formatExample)
                 .collect(Collectors.joining("\n\n"));
 
         return judgeService.evaluateWithRag(
-                testCase.targetTitle(),
-                testCase.sourceTitle(),
+                testCase.getTargetTitle(),
+                testCase.getSourceTitle(),
                 examples
         );
     }
 
     private String formatExample(RetrievedCase retrievedCase) {
-        RecoveryCase example = retrievedCase.recoveryCase();
+        ReferenceCase example = retrievedCase.referenceCase();
         return """
                 Target: %s
                 Source: %s
                 Human Label: %s
                 Human Reason: %s
                 """.formatted(
-                example.targetTitle(),
-                example.sourceTitle(),
-                example.humanLabel(),
-                example.humanReason()
+                example.getTargetTitle(),
+                example.getSourceTitle(),
+                example.getHumanLabel(),
+                example.getHumanReason()
         );
     }
 }

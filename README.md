@@ -20,10 +20,10 @@
 - **LLM**: Gemini 2.5 Flash Lite
 - **Embedding**: Gemini Embedding 001
 - **Evaluation**: Human-labeled Reference Dataset
-- **Vector Search:** CloudSQL(Prod), In-Memory Embedding Store(Test)
-- **Infra**: 
-- **Database**: 
+- **Vector Search:** Qdrant(Prod), In-Memory Embedding Store(Test)
+- **Database**: Qdrant, CloudSQL
 - **Persistence**: 
+- **Infra**:
 - **Message Broker**: 
 - **Monitoring**: 
 - **Scheduler**: 
