@@ -10,17 +10,17 @@ import java.time.LocalDateTime;
 @Getter
 public class ReferenceCase {
 
-    String referenceCaseId;
+    private final String referenceCaseId;
 
-    String targetTitle;
+    private final String targetTitle;
 
-    String sourceTitle;
+    private final String sourceTitle;
 
-    EvaluationLabel humanLabel;
+    private EvaluationLabel humanLabel;
 
-    String humanReason;
+    private String humanReason;
 
-    LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 
 
     @Builder(access = AccessLevel.PRIVATE)
@@ -59,7 +59,7 @@ public class ReferenceCase {
                 .build();
     }
 
-    public static ReferenceCase constitute(
+    public static ReferenceCase reconstitute(
             String referenceCaseId,
             String targetTitle,
             String sourceTitle,

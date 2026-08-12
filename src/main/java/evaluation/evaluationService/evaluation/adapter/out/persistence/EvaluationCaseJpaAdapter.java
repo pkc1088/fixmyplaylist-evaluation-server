@@ -1,7 +1,7 @@
 package evaluation.evaluationService.evaluation.adapter.out.persistence;
 
-import evaluation.evaluationService.evaluation.application.port.out.LoadEvaluationCasePort;
-import evaluation.evaluationService.evaluation.application.port.out.SaveEvaluationCasePort;
+import evaluation.evaluationService.evaluation.application.port.out.evaluation.CommandEvaluationCasePort;
+import evaluation.evaluationService.evaluation.application.port.out.evaluation.QueryEvaluationCasePort;
 import evaluation.evaluationService.evaluation.domain.model.EvaluationCase;
 import evaluation.evaluationService.evaluation.domain.model.enums.EvaluationStatus;
 import lombok.RequiredArgsConstructor;
@@ -11,14 +11,20 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class EvaluationCaseJpaAdapter implements SaveEvaluationCasePort, LoadEvaluationCasePort {
+public class EvaluationCaseJpaAdapter implements CommandEvaluationCasePort, QueryEvaluationCasePort {
 
     private final EvaluationCaseSdjRepository repository;
+    private final EvaluationCaseMapper mapper;
 
 
     @Override
     public void save(EvaluationCase evaluationCase) {
-        repository.save(EvaluationCaseJpaEntity.from(evaluationCase));
+        repository.save(mapper.toEntity(evaluationCase, true));
+    }
+
+    @Override
+    public void update(EvaluationCase evaluationCase) {
+        repository.save(mapper.toEntity(evaluationCase, false));
     }
 
     @Override
@@ -29,14 +35,14 @@ public class EvaluationCaseJpaAdapter implements SaveEvaluationCasePort, LoadEva
     @Override
     public List<EvaluationCase> loadPendingEvaluation() {
         return repository.findByEvaluationStatus(EvaluationStatus.PENDING).stream()
-                .map(EvaluationCaseJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .toList();
     }
 
     @Override
     public List<EvaluationCase> loadPendingReview() {
         return repository.findByEvaluationStatusOrderByAiConfidenceAsc(EvaluationStatus.AI_EVALUATED).stream()
-                .map(EvaluationCaseJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .toList();
     }
 }

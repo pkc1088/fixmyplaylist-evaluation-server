@@ -1,72 +1,91 @@
 package evaluation.evaluationService.evaluation.adapter.out.persistence;
 
-import evaluation.evaluationService.evaluation.domain.model.ReferenceCase;
 import evaluation.evaluationService.evaluation.domain.model.enums.EvaluationLabel;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.springframework.data.domain.Persistable;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "reference_cases")
 @Getter
+@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ReferenceCaseJpaEntity {
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Table(name = "reference_cases")
+public class ReferenceCaseJpaEntity implements Persistable<String> {
 
     @Id
-    @Column(name = "reference_case_id")
+    @Column(length = 100)
     private String referenceCaseId;
 
-    @Column(name = "target_title", nullable = false)
+    @Column(nullable = false, length = 255)
     private String targetTitle;
 
-    @Column(name = "source_title", nullable = false)
+    @Column(nullable = false, length = 255)
     private String sourceTitle;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "human_label")
+    @Column(nullable = false, length = 20)
     private EvaluationLabel humanLabel;
 
-    @Column(name = "human_reason", columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String humanReason;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    @Builder
-    private ReferenceCaseJpaEntity(
-            String referenceCaseId,
-            String targetTitle,
-            String sourceTitle,
-            EvaluationLabel humanLabel,
-            String humanReason,
-            LocalDateTime createdAt
-    ) {
-        this.referenceCaseId = referenceCaseId;
-        this.targetTitle = targetTitle;
-        this.sourceTitle = sourceTitle;
-        this.humanLabel = humanLabel;
-        this.humanReason = humanReason;
-        this.createdAt = createdAt;
+    @Transient
+    @Builder.Default
+    private boolean isNew = false;
+
+    @Override
+    public String getId() {
+        return this.referenceCaseId;
     }
 
-    public static ReferenceCaseJpaEntity from(ReferenceCase domain) {
-        return ReferenceCaseJpaEntity.builder()
-                .referenceCaseId(domain.getReferenceCaseId())
-                .targetTitle(domain.getTargetTitle())
-                .sourceTitle(domain.getSourceTitle())
-                .humanLabel(domain.getHumanLabel())
-                .humanReason(domain.getHumanReason())
-                .createdAt(domain.getCreatedAt())
-                .build();
+    @Override
+    public boolean isNew() {
+        return this.isNew;
     }
 
-    public ReferenceCase toDomain() {
-        return ReferenceCase.constitute(
-                referenceCaseId, targetTitle, sourceTitle, humanLabel, humanReason, createdAt
-        );
+    @PostLoad
+    @PostPersist
+    void markNotNew() {
+        this.isNew = false;
     }
+
+//    @Builder
+//    private ReferenceCaseJpaEntity(
+//            String referenceCaseId,
+//            String targetTitle,
+//            String sourceTitle,
+//            EvaluationLabel humanLabel,
+//            String humanReason,
+//            LocalDateTime createdAt
+//    ) {
+//        this.referenceCaseId = referenceCaseId;
+//        this.targetTitle = targetTitle;
+//        this.sourceTitle = sourceTitle;
+//        this.humanLabel = humanLabel;
+//        this.humanReason = humanReason;
+//        this.createdAt = createdAt;
+//    }
+//
+//    public static ReferenceCaseJpaEntity from(ReferenceCase domain) {
+//        return ReferenceCaseJpaEntity.builder()
+//                .referenceCaseId(domain.getReferenceCaseId())
+//                .targetTitle(domain.getTargetTitle())
+//                .sourceTitle(domain.getSourceTitle())
+//                .humanLabel(domain.getHumanLabel())
+//                .humanReason(domain.getHumanReason())
+//                .createdAt(domain.getCreatedAt())
+//                .build();
+//    }
+//
+//    public ReferenceCase toDomain() {
+//        return ReferenceCase.reconstitute(
+//                referenceCaseId, targetTitle, sourceTitle, humanLabel, humanReason, createdAt
+//        );
+//    }
 }

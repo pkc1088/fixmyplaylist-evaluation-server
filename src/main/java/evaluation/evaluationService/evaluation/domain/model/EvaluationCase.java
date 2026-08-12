@@ -11,11 +11,11 @@ import java.time.LocalDateTime;
 @Getter
 public class EvaluationCase {
 
-    private String recoveryId;
+    private final String evaluationCaseId;
 
-    private String targetTitle;
+    private final String targetTitle;
 
-    private String sourceTitle;
+    private final String sourceTitle;
 
     private EvaluationLabel aiLabel;
 
@@ -23,9 +23,9 @@ public class EvaluationCase {
 
     private EvaluationStatus evaluationStatus;
 
-    private EvaluationLabel humanLabel; // nullable
+    private EvaluationLabel humanLabel;
 
-    private String humanReason; // nullable
+    private String humanReason;
 
     private LocalDateTime createdAt;
 
@@ -36,7 +36,7 @@ public class EvaluationCase {
 
     @Builder(access = AccessLevel.PRIVATE)
     private EvaluationCase(
-            String recoveryId,
+            String evaluationCaseId,
             String targetTitle,
             String sourceTitle,
             EvaluationLabel aiLabel,
@@ -48,7 +48,7 @@ public class EvaluationCase {
             LocalDateTime evaluatedAt,
             LocalDateTime reviewedAt
     ) {
-        this.recoveryId = recoveryId;
+        this.evaluationCaseId = evaluationCaseId;
         this.targetTitle = targetTitle;
         this.sourceTitle = sourceTitle;
         this.aiLabel = aiLabel;
@@ -57,7 +57,7 @@ public class EvaluationCase {
         this.humanLabel = humanLabel;
         this.humanReason = humanReason;
         this.createdAt = (createdAt != null) ? createdAt : LocalDateTime.now();
-        this.evaluatedAt = (evaluatedAt != null) ? evaluatedAt : LocalDateTime.now();
+        this.evaluatedAt = evaluatedAt;
         this.reviewedAt = reviewedAt;
 
         validate();
@@ -69,18 +69,26 @@ public class EvaluationCase {
         }
     }
 
-    public static EvaluationCase createPending(String recoveryId, String targetTitle, String sourceTitle) {
+    public static EvaluationCase createPending(
+            String evaluationCaseId,
+            String targetTitle,
+            String sourceTitle
+    ) {
         return EvaluationCase.builder()
-                .recoveryId(recoveryId)
+                .evaluationCaseId(evaluationCaseId)
                 .targetTitle(targetTitle)
                 .sourceTitle(sourceTitle)
                 .evaluationStatus(EvaluationStatus.PENDING)
+                .createdAt(LocalDateTime.now())
                 .build();
     }
 
-    public EvaluationCase applyAiEvaluation(EvaluationLabel aiLabel, Double aiConfidence) {
+    public EvaluationCase applyAiEvaluation(
+            EvaluationLabel aiLabel,
+            Double aiConfidence
+    ) {
         return EvaluationCase.builder()
-                .recoveryId(this.recoveryId)
+                .evaluationCaseId(this.evaluationCaseId)
                 .targetTitle(this.targetTitle)
                 .sourceTitle(this.sourceTitle)
                 .aiLabel(aiLabel)
@@ -94,8 +102,27 @@ public class EvaluationCase {
                 .build();
     }
 
-    public static EvaluationCase constitute(
-            String recoveryId,
+    public EvaluationCase applyHumanReview(
+            EvaluationLabel humanLabel,
+            String humanReason
+    ) {
+        return EvaluationCase.builder()
+                .evaluationCaseId(this.evaluationCaseId)
+                .targetTitle(this.targetTitle)
+                .sourceTitle(this.sourceTitle)
+                .aiLabel(this.aiLabel)
+                .aiConfidence(this.aiConfidence)
+                .evaluationStatus(EvaluationStatus.HUMAN_REVIEWED)
+                .humanLabel(humanLabel)
+                .humanReason(humanReason)
+                .createdAt(this.createdAt)
+                .evaluatedAt(this.evaluatedAt)
+                .reviewedAt(LocalDateTime.now())
+                .build();
+    }
+
+    public static EvaluationCase reconstitute(
+            String evaluationCaseId,
             String targetTitle,
             String sourceTitle,
             EvaluationLabel aiLabel,
@@ -108,7 +135,7 @@ public class EvaluationCase {
             LocalDateTime reviewedAt
     ) {
         return EvaluationCase.builder()
-                .recoveryId(recoveryId)
+                .evaluationCaseId(evaluationCaseId)
                 .targetTitle(targetTitle)
                 .sourceTitle(sourceTitle)
                 .aiLabel(aiLabel)

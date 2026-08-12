@@ -2,9 +2,9 @@
 //
 //import evaluation.evaluationService.evaluation.application.port.in.RunEvaluationUseCase;
 //import evaluation.evaluationService.evaluation.application.port.out.EvaluateRecoveryPort;
-//import evaluation.evaluationService.evaluation.application.port.out.LoadEvaluationCasePort;
+//import evaluation.evaluationService.evaluation.application.port.out.evaluation.QueryEvaluationCasePort;
 //import evaluation.evaluationService.evaluation.application.port.out.RetrieveReferenceCasePort;
-//import evaluation.evaluationService.evaluation.application.port.out.SaveEvaluationCasePort;
+//import evaluation.evaluationService.evaluation.application.port.out.evaluation.CommandEvaluationCasePort;
 //import evaluation.evaluationService.evaluation.domain.model.EvaluationCase;
 //import evaluation.evaluationService.evaluation.domain.model.ReferenceCase;
 //import evaluation.evaluationService.evaluation.domain.model.vo.EvaluationOutput;
@@ -27,8 +27,8 @@
 //public class EvaluationRunnerService implements RunEvaluationUseCase {
 //
 //    private final RetrieveReferenceCasePort retrieveReferenceCasePort;
-//    private final LoadEvaluationCasePort loadRecoveryCasePort;
-//    private final SaveEvaluationCasePort saveRecoveryCasePort;
+//    private final QueryEvaluationCasePort loadRecoveryCasePort;
+//    private final CommandEvaluationCasePort saveRecoveryCasePort;
 //    private final EvaluateRecoveryPort evaluateRecoveryPort;
 //
 //

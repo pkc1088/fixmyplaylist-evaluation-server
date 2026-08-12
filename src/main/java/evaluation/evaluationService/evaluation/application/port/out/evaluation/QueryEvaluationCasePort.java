@@ -1,10 +1,10 @@
-package evaluation.evaluationService.evaluation.application.port.out;
+package evaluation.evaluationService.evaluation.application.port.out.evaluation;
 
 import evaluation.evaluationService.evaluation.domain.model.EvaluationCase;
 
 import java.util.List;
 
-public interface LoadEvaluationCasePort {
+public interface QueryEvaluationCasePort {
 
     List<EvaluationCase> loadPendingEvaluation();   // status = PENDING → AI 평가 대상
 

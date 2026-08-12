@@ -6,10 +6,8 @@ import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
-import dev.langchain4j.store.embedding.EmbeddingSearchResult;
 import dev.langchain4j.store.embedding.EmbeddingStore;
-import evaluation.evaluationService.evaluation.application.port.out.LoadEvaluationCasePort;
-import evaluation.evaluationService.evaluation.application.port.out.LoadReferenceCasePort;
+import evaluation.evaluationService.evaluation.application.port.out.reference.QueryReferenceCasePort;
 import evaluation.evaluationService.evaluation.application.port.out.RetrieveReferenceCasePort;
 import evaluation.evaluationService.evaluation.domain.model.EvaluationCase;
 import evaluation.evaluationService.evaluation.domain.model.ReferenceCase;
@@ -27,7 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RecoveryCaseRetriever implements RetrieveReferenceCasePort {
 
-    private final LoadReferenceCasePort loadReferenceCasePort;
+    private final QueryReferenceCasePort queryReferenceCasePort; // <- 상위에서 주자
     private final EmbeddingStore<TextSegment> embeddingStore;
     private final EmbeddingModel embeddingModel;
 
@@ -64,7 +62,7 @@ public class RecoveryCaseRetriever implements RetrieveReferenceCasePort {
                 .map(m -> m.embedded().metadata().getString("referenceCaseId"))
                 .toList();
 
-        Map<String, ReferenceCase> caseById = loadReferenceCasePort.loadByIds(caseIds).stream()
+        Map<String, ReferenceCase> caseById = queryReferenceCasePort.loadByIds(caseIds).stream()
                 .collect(Collectors.toMap(ReferenceCase::getReferenceCaseId, Function.identity()));
 
         return matches.stream()

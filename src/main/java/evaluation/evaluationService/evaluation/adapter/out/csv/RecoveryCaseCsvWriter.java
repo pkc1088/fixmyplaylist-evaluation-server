@@ -1,7 +1,7 @@
 //package evaluation.evaluationService.evaluation.adapter.out.csv;
 //
 //import com.opencsv.CSVWriter;
-//import evaluation.evaluationService.evaluation.application.port.out.SaveEvaluationCasePort;
+//import evaluation.evaluationService.evaluation.application.port.out.evaluation.CommandEvaluationCasePort;
 //import evaluation.evaluationService.evaluation.domain.model.vo.EvaluationOutput;
 //import lombok.extern.slf4j.Slf4j;
 //import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@
 //
 //@Slf4j
 //@Component
-//public class RecoveryCaseCsvWriter implements SaveEvaluationCasePort {
+//public class RecoveryCaseCsvWriter implements CommandEvaluationCasePort {
 //
 //    public void exportResults(List<EvaluationOutput> results) throws IOException {
 //
