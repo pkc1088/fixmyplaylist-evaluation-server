@@ -18,24 +18,19 @@ import java.util.stream.Stream;
 @Component
 public class CsvReaderAdapter implements CsvPort {
 
-    public List<ReferenceCase> read(Integer limit) throws IOException, CsvException {
+    public List<ReferenceCase> read() throws IOException, CsvException {
 
         Path inputPath = Path.of("data/recovery_cases.csv");
 
         try (Reader reader = Files.newBufferedReader(inputPath, StandardCharsets.UTF_8);
             CSVReader csvReader = new CSVReader(reader)) {
 
-            Stream<String[]> rows = csvReader.readAll().stream().skip(1);
-            if (limit != null) {
-                rows = rows.limit(limit);
-            }
-            return rows.map(this::toCase).toList();
-            /*List<String[]> rows = csvReader.readAll();
+            List<String[]> rows = csvReader.readAll();
 
             return rows.stream()
                     .skip(1)
                     .map(this::toCase)
-                    .toList();*/
+                    .toList();
         }
     }
 

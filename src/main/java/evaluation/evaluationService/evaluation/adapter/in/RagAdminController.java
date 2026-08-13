@@ -20,8 +20,8 @@ public class RagAdminController {
 
     // 초기 셋업: CSV 읽고 CloudSQL 과 Qdrant 양쪽에 모두 붓는 작업
     @PostMapping("/setup/initial")
-    public ResponseEntity<String> setupInitialData(@RequestParam(required = false) Integer limit) {
-        referenceCaseSetupUseCase.loadCsvAndInitialize(limit);
+    public ResponseEntity<String> setupInitialData() {
+        referenceCaseSetupUseCase.loadCsvAndInitialize();
         return ResponseEntity.ok("CSV 데이터 기반 초기 세팅 완료");
     }
 

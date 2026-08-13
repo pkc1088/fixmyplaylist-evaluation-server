@@ -5,10 +5,13 @@ import evaluation.evaluationService.evaluation.application.port.out.evaluation.Q
 import evaluation.evaluationService.evaluation.domain.model.EvaluationCase;
 import evaluation.evaluationService.evaluation.domain.model.enums.EvaluationStatus;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class EvaluationCaseJpaAdapter implements CommandEvaluationCasePort, QueryEvaluationCasePort {
@@ -16,6 +19,20 @@ public class EvaluationCaseJpaAdapter implements CommandEvaluationCasePort, Quer
     private final EvaluationCaseSdjRepository repository;
     private final EvaluationCaseMapper mapper;
 
+
+    // [자동화 단계] EvaluationCase: Inbox
+    @Override
+    public boolean saveIdempotent(EvaluationCase evaluationCase) {
+        try {
+            EvaluationCaseJpaEntity entity = mapper.toEntity(evaluationCase, true);
+            repository.saveAndFlush(entity);
+            return true;
+
+        } catch (DataIntegrityViolationException e) {
+            log.warn("[EvaluationCase 중복 수신 무시] id={}", evaluationCase.getEvaluationCaseId());
+            return false;
+        }
+    }
 
     @Override
     public void save(EvaluationCase evaluationCase) {

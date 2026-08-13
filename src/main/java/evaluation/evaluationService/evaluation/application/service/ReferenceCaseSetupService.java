@@ -20,29 +20,26 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReferenceCaseSetupService implements ReferenceCaseSetupUseCase {
 
-    private final ReferenceCaseIndexingService referenceCaseIndexingService;
     private final RetrieveReferenceCasePort retrieveReferenceCasePort;
     private final CommandReferenceCasePort commandReferenceCasePort;
     private final QueryReferenceCasePort queryReferenceCasePort;
-    private final CsvPort csvReaderAdapter;
+    private final CsvPort csvPort;
 
 
     @Override
-    public void loadCsvAndInitialize(Integer limit) {
+    public void loadCsvAndInitialize() {
 
         List<ReferenceCase> csvReferenceData;
         try {
-            csvReferenceData = new ArrayList<>(csvReaderAdapter.read(limit));
+            csvReferenceData = new ArrayList<>(csvPort.read());
 
         } catch(IOException | CsvException e) {
             log.error(e.getMessage(), e);
             return; // 커스텀 ReferenceCaseSetupException 던지기
         }
 
-
-        referenceCaseIndexingService.indexNewCases(csvReferenceData); // 저장+색인 로직 중복 제거
-//        commandReferenceCasePort.saveAll(csvReferenceData);
-//        retrieveReferenceCasePort.index(csvReferenceData);
+        commandReferenceCasePort.saveAll(csvReferenceData); // CloudSQL/MySQL 적재
+        retrieveReferenceCasePort.index(csvReferenceData);  // Qdrant 적재
     }
 
     @Override

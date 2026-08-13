@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface CsvPort {
 
-    List<ReferenceCase> read(Integer limit) throws IOException, CsvException;
+    List<ReferenceCase> read() throws IOException, CsvException;
 }
