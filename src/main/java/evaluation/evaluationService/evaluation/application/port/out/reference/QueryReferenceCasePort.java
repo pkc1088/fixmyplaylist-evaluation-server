@@ -7,4 +7,6 @@ import java.util.List;
 public interface QueryReferenceCasePort {
 
     List<ReferenceCase> loadByIds(List<String> ids);
+
+    List<ReferenceCase> loadAll();
 }

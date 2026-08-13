@@ -2,6 +2,7 @@ package evaluation.evaluationService.evaluation.adapter.out.csv;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
+import evaluation.evaluationService.evaluation.application.port.out.CsvPort;
 import evaluation.evaluationService.evaluation.domain.model.ReferenceCase;
 import evaluation.evaluationService.evaluation.domain.model.enums.EvaluationLabel;
 import org.springframework.stereotype.Component;
@@ -12,23 +13,29 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Component
-public class RecoveryCaseCsvReader {
+public class CsvReaderAdapter implements CsvPort {
 
-    public List<ReferenceCase> read() throws IOException, CsvException {
+    public List<ReferenceCase> read(Integer limit) throws IOException, CsvException {
 
         Path inputPath = Path.of("data/recovery_cases.csv");
 
         try (Reader reader = Files.newBufferedReader(inputPath, StandardCharsets.UTF_8);
             CSVReader csvReader = new CSVReader(reader)) {
 
-            List<String[]> rows = csvReader.readAll();
+            Stream<String[]> rows = csvReader.readAll().stream().skip(1);
+            if (limit != null) {
+                rows = rows.limit(limit);
+            }
+            return rows.map(this::toCase).toList();
+            /*List<String[]> rows = csvReader.readAll();
 
             return rows.stream()
                     .skip(1)
                     .map(this::toCase)
-                    .toList();
+                    .toList();*/
         }
     }
 

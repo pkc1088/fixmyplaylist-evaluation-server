@@ -7,6 +7,4 @@ public interface CommandEvaluationCasePort {
     void save(EvaluationCase evaluationCase);
 
     void update(EvaluationCase evaluationCase);
-
-    boolean existsById(String recoveryId);
 }

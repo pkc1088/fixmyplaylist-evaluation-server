@@ -16,8 +16,9 @@ public class ReferenceCaseIndexingService {
     private final CommandReferenceCasePort commandReferenceCasePort;
 
 
+    // @Transactional ?
     public void indexNewCases(List<ReferenceCase> cases) {
-        commandReferenceCasePort.saveAll(cases); // 1. CloudSQL: source of truth
-        retrieveReferenceCasePort.index(cases); // 2. Qdrant: 검색 인덱스
+        commandReferenceCasePort.saveAll(cases);    // 1. CloudSQL: source of truth
+        retrieveReferenceCasePort.index(cases);     // 2. Qdrant: 검색 인덱스
     }
 }

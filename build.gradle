@@ -47,7 +47,7 @@ dependencies {
 	// CSV
 	implementation 'com.opencsv:opencsv:5.9'
 	// Qdrant
-	implementation 'dev.langchain4j:langchain4j-qdrant:1.18.1-beta28' // implementation 'io.qdrant:client:1.18.3'
+	implementation 'dev.langchain4j:langchain4j-qdrant:1.18.1-beta28'
 }
 
 tasks.named('test') {

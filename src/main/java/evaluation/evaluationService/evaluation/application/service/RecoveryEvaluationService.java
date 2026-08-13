@@ -1,6 +1,7 @@
 package evaluation.evaluationService.evaluation.application.service;
 
-import evaluation.evaluationService.evaluation.adapter.out.external.GeminiEvaluator;
+import evaluation.evaluationService.evaluation.application.port.in.RecoveryEvaluationUseCase;
+import evaluation.evaluationService.evaluation.application.port.out.EvaluateRecoveryPort;
 import evaluation.evaluationService.evaluation.application.port.out.dto.VectorSearchResult;
 import evaluation.evaluationService.evaluation.application.port.out.evaluation.CommandEvaluationCasePort;
 import evaluation.evaluationService.evaluation.application.port.out.evaluation.QueryEvaluationCasePort;
@@ -26,13 +27,13 @@ import static evaluation.evaluationService.evaluation.domain.model.ReferenceCase
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RecoveryEvaluationService {
+public class RecoveryEvaluationService implements RecoveryEvaluationUseCase {
 
     private final CommandEvaluationCasePort commandEvaluationCasePort;
     private final RetrieveReferenceCasePort retrieveReferenceCasePort;
     private final QueryEvaluationCasePort queryEvaluationCasePort;
     private final QueryReferenceCasePort queryReferenceCasePort;
-    private final GeminiEvaluator geminiEvaluator;
+    private final EvaluateRecoveryPort evaluateRecoveryPort;
 
 
     public void evaluatePendingCases() {
@@ -63,12 +64,12 @@ public class RecoveryEvaluationService {
         List<RetrievedCase> similarCases = vectorResults.stream()
                 .map(vr -> {
                     ReferenceCase rc = caseById.get(vr.referenceCaseId());
-                    return (rc != null) ? new RetrievedCase(rc, vr.confidence()) : null;
+                    return (rc != null) ? new RetrievedCase(rc, vr.similarityScore()) : null;
                 })
                 .filter(Objects::nonNull)
                 .toList();
 
-        EvaluationResult result = geminiEvaluator.evaluateWithRag(evaluationCase, similarCases);
+        EvaluationResult result = evaluateRecoveryPort.evaluateWithRag(evaluationCase, similarCases);
 
         List<ReferenceTrace> refInfo = similarCases.stream()
                 .map(rc -> new ReferenceTrace(rc.referenceCase().getReferenceCaseId(), rc.similarityScore()))
@@ -81,7 +82,7 @@ public class RecoveryEvaluationService {
         );
         commandEvaluationCasePort.update(evaluated);
 
-        log.info("평가 완료 recoveryId={} label={} confidence={} 참조건수={}",
+        log.info("평가 완료 recoveryId={} label={} similarityScore={} 참조건수={}",
                 evaluationCase.getEvaluationCaseId(), result.label(), result.confidence(), similarCases.size()
         );
     }

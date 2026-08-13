@@ -9,4 +9,6 @@ public interface QueryEvaluationCasePort {
     List<EvaluationCase> loadPendingEvaluation();   // status = PENDING → AI 평가 대상
 
     List<EvaluationCase> loadPendingReview();       // status = AI_EVALUATED → 휴먼 리뷰 대상
+
+    boolean existsById(String recoveryId);
 }

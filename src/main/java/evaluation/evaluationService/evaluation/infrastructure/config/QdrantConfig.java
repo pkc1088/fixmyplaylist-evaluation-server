@@ -3,8 +3,6 @@ package evaluation.evaluationService.evaluation.infrastructure.config;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.qdrant.QdrantEmbeddingStore;
-import io.qdrant.client.QdrantClient;
-import io.qdrant.client.QdrantGrpcClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,7 +22,8 @@ public class QdrantConfig {
     @Value("${qdrant.use-tls}")
     private boolean useTls;
 
-    private static final String COLLECTION_NAME = "reference_cases";
+    @Value("${qdrant.collection-name}")
+    private String collectionName;
 
     @Bean
     public EmbeddingStore<TextSegment> qdrantEmbeddingStore() {
@@ -33,7 +32,7 @@ public class QdrantConfig {
                 .port(qdrantPort)
                 .apiKey(qdrantApiKey)
                 .useTls(useTls)
-                .collectionName(COLLECTION_NAME)
+                .collectionName(collectionName)
                 .build();
     }
 }

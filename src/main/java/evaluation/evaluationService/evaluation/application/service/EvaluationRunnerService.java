@@ -1,6 +1,6 @@
 //package evaluation.evaluationService.evaluation.application.service;
 //
-//import evaluation.evaluationService.evaluation.application.port.in.RunEvaluationUseCase;
+//import evaluation.evaluationService.evaluation.application.port.in.RecoveryEvaluationUseCase;
 //import evaluation.evaluationService.evaluation.application.port.out.EvaluateRecoveryPort;
 //import evaluation.evaluationService.evaluation.application.port.out.evaluation.QueryEvaluationCasePort;
 //import evaluation.evaluationService.evaluation.application.port.out.RetrieveReferenceCasePort;
@@ -24,7 +24,7 @@
 //@Slf4j
 //@Component
 //@RequiredArgsConstructor
-//public class EvaluationRunnerService implements RunEvaluationUseCase {
+//public class EvaluationRunnerService implements RecoveryEvaluationUseCase {
 //
 //    private final RetrieveReferenceCasePort retrieveReferenceCasePort;
 //    private final QueryEvaluationCasePort loadRecoveryCasePort;

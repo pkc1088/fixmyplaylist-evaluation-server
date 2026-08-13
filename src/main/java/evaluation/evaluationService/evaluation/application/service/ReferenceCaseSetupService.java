@@ -1,10 +1,11 @@
 package evaluation.evaluationService.evaluation.application.service;
 
 import com.opencsv.exceptions.CsvException;
-import evaluation.evaluationService.evaluation.adapter.out.csv.RecoveryCaseCsvReader;
 import evaluation.evaluationService.evaluation.application.port.in.ReferenceCaseSetupUseCase;
+import evaluation.evaluationService.evaluation.application.port.out.CsvPort;
 import evaluation.evaluationService.evaluation.application.port.out.RetrieveReferenceCasePort;
 import evaluation.evaluationService.evaluation.application.port.out.reference.CommandReferenceCasePort;
+import evaluation.evaluationService.evaluation.application.port.out.reference.QueryReferenceCasePort;
 import evaluation.evaluationService.evaluation.domain.model.ReferenceCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,32 +20,35 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReferenceCaseSetupService implements ReferenceCaseSetupUseCase {
 
-    // EvaluationRunnerService 참고
-
+    private final ReferenceCaseIndexingService referenceCaseIndexingService;
     private final RetrieveReferenceCasePort retrieveReferenceCasePort;
     private final CommandReferenceCasePort commandReferenceCasePort;
-    private final RecoveryCaseCsvReader recoveryCaseCsvReader; // <- Port 로 만들기
+    private final QueryReferenceCasePort queryReferenceCasePort;
+    private final CsvPort csvReaderAdapter;
+
 
     @Override
-    public void loadCsvAndInitialize() {
+    public void loadCsvAndInitialize(Integer limit) {
 
-        // 1. 트랜잭션이 걸린 내부 메서드를 호출하여 DB에 안전하게 저장 (commit 됨)
         List<ReferenceCase> csvReferenceData;
         try {
-            csvReferenceData = new ArrayList<>(recoveryCaseCsvReader.read());
+            csvReferenceData = new ArrayList<>(csvReaderAdapter.read(limit));
 
         } catch(IOException | CsvException e) {
             log.error(e.getMessage(), e);
-            return;
+            return; // 커스텀 ReferenceCaseSetupException 던지기
         }
-        commandReferenceCasePort.saveAll(csvReferenceData);
 
-        // 2. 트랜잭션이 끝난 후 Qdrant 외부 API 호출 (시간 오래 걸림)
-        retrieveReferenceCasePort.index(csvReferenceData);
+
+        referenceCaseIndexingService.indexNewCases(csvReferenceData); // 저장+색인 로직 중복 제거
+//        commandReferenceCasePort.saveAll(csvReferenceData);
+//        retrieveReferenceCasePort.index(csvReferenceData);
     }
 
     @Override
     public void reindexAllFromDatabase() {
-
+        List<ReferenceCase> all = queryReferenceCasePort.loadAll();
+        retrieveReferenceCasePort.index(all);
+        log.info("전체 재색인 완료: {}건", all.size());
     }
 }

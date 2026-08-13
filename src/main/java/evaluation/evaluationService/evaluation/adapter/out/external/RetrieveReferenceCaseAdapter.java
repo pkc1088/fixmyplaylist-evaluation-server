@@ -20,7 +20,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public class RecoveryCaseRetriever implements RetrieveReferenceCasePort {
+public class RetrieveReferenceCaseAdapter implements RetrieveReferenceCasePort {
 
     private final EmbeddingStore<TextSegment> embeddingStore;
     private final EmbeddingModel embeddingModel;

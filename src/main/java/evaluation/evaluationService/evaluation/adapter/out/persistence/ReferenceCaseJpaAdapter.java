@@ -41,4 +41,11 @@ public class ReferenceCaseJpaAdapter implements QueryReferenceCasePort, CommandR
                 .map(mapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public List<ReferenceCase> loadAll() {
+        return repository.findAll().stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
 }

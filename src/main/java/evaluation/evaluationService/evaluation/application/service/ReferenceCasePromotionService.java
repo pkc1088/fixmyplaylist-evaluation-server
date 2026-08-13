@@ -23,7 +23,6 @@ public class ReferenceCasePromotionService {
 
     @Transactional(rollbackFor = Exception.class)
     public void promote(
-            String evaluateCaseId,
             EvaluationCase evaluationCase,
             EvaluationLabel humanLabel,
             String humanReason
@@ -31,15 +30,15 @@ public class ReferenceCasePromotionService {
         EvaluationCase reviewed = evaluationCase.applyHumanReview(humanLabel, humanReason);
 
         ReferenceCase referenceCase = ReferenceCase.create(
-                evaluateCaseId, // evaluateCaseId == referenceCaseId
+                reviewed.getEvaluationCaseId(), // evaluateCaseId == referenceCaseId
                 reviewed.getTargetTitle(),
                 reviewed.getSourceTitle(),
                 reviewed.getHumanLabel(),
                 reviewed.getHumanReason()
         );
 
-        commandReferenceCasePort.save(referenceCase);                    // 1. CloudSQL: source of truth
-        commandEvaluationCasePort.update(reviewed);                        // 3. EvaluationCase → HUMAN_REVIEWED
-        retrieveReferenceCasePort.index(List.of(referenceCase));      // 2. Qdrant: 색인
+        commandReferenceCasePort.save(referenceCase);               // 1. CloudSQL: source of truth
+        commandEvaluationCasePort.update(reviewed);                 // 2. EvaluationCase → HUMAN_REVIEWED
+        retrieveReferenceCasePort.index(List.of(referenceCase));    // 3. Qdrant: 색인
     }
 }

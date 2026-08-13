@@ -16,12 +16,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public class GeminiEvaluator implements EvaluateRecoveryPort {
+public class GeminiEvaluatorAdapter implements EvaluateRecoveryPort {
 
     private final JudgeAiService judgeService;
 
 
-    public GeminiEvaluator(ChatModel chatModel) {
+    public GeminiEvaluatorAdapter(ChatModel chatModel) {
         this.judgeService = AiServices.create(JudgeAiService.class, chatModel);
     }
 
