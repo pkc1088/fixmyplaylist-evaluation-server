@@ -35,6 +35,7 @@ public class ReferenceCaseJpaEntity implements Persistable<String> {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+
     @Transient
     @Builder.Default
     private boolean isNew = false;
@@ -54,38 +55,4 @@ public class ReferenceCaseJpaEntity implements Persistable<String> {
     void markNotNew() {
         this.isNew = false;
     }
-
-//    @Builder
-//    private ReferenceCaseJpaEntity(
-//            String referenceCaseId,
-//            String targetTitle,
-//            String sourceTitle,
-//            EvaluationLabel humanLabel,
-//            String humanReason,
-//            LocalDateTime createdAt
-//    ) {
-//        this.referenceCaseId = referenceCaseId;
-//        this.targetTitle = targetTitle;
-//        this.sourceTitle = sourceTitle;
-//        this.humanLabel = humanLabel;
-//        this.humanReason = humanReason;
-//        this.createdAt = createdAt;
-//    }
-//
-//    public static ReferenceCaseJpaEntity from(ReferenceCase domain) {
-//        return ReferenceCaseJpaEntity.builder()
-//                .referenceCaseId(domain.getReferenceCaseId())
-//                .targetTitle(domain.getTargetTitle())
-//                .sourceTitle(domain.getSourceTitle())
-//                .humanLabel(domain.getHumanLabel())
-//                .humanReason(domain.getHumanReason())
-//                .createdAt(domain.getCreatedAt())
-//                .build();
-//    }
-//
-//    public ReferenceCase toDomain() {
-//        return ReferenceCase.reconstitute(
-//                referenceCaseId, targetTitle, sourceTitle, humanLabel, humanReason, createdAt
-//        );
-//    }
 }

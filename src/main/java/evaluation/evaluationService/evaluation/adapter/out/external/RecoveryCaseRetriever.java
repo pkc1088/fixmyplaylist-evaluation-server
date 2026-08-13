@@ -7,25 +7,21 @@ import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingStore;
-import evaluation.evaluationService.evaluation.application.port.out.reference.QueryReferenceCasePort;
 import evaluation.evaluationService.evaluation.application.port.out.RetrieveReferenceCasePort;
+import evaluation.evaluationService.evaluation.application.port.out.dto.VectorSearchResult;
 import evaluation.evaluationService.evaluation.domain.model.EvaluationCase;
 import evaluation.evaluationService.evaluation.domain.model.ReferenceCase;
-import evaluation.evaluationService.evaluation.domain.model.vo.RetrievedCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
 public class RecoveryCaseRetriever implements RetrieveReferenceCasePort {
 
-    private final QueryReferenceCasePort queryReferenceCasePort; // <- 상위에서 주자
     private final EmbeddingStore<TextSegment> embeddingStore;
     private final EmbeddingModel embeddingModel;
 
@@ -38,11 +34,14 @@ public class RecoveryCaseRetriever implements RetrieveReferenceCasePort {
 
         List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
 
-        embeddingStore.addAll(embeddings, segments);
+        List<String> deterministicIds = cases.stream()
+                .map(c -> UUID.nameUUIDFromBytes(c.getReferenceCaseId().getBytes(StandardCharsets.UTF_8)).toString())
+                .toList();
+
+        embeddingStore.addAll(deterministicIds, embeddings, segments);
     }
 
-    @Override
-    public List<RetrievedCase> retrieve(EvaluationCase testCase, int topK) {
+    public List<VectorSearchResult> retrieveIds(EvaluationCase testCase, int topK) {
 
         String queryText = toEmbeddingText(testCase.getTargetTitle(), testCase.getSourceTitle());
 
@@ -55,26 +54,12 @@ public class RecoveryCaseRetriever implements RetrieveReferenceCasePort {
                 .maxResults(topK)
                 .build();
 
-        // EmbeddingSearchResult<TextSegment> result = embeddingStore.search(request);
         List<EmbeddingMatch<TextSegment>> matches = embeddingStore.search(request).matches();
 
-        List<String> caseIds = matches.stream()
-                .map(m -> m.embedded().metadata().getString("referenceCaseId"))
-                .toList();
-
-        Map<String, ReferenceCase> caseById = queryReferenceCasePort.loadByIds(caseIds).stream()
-                .collect(Collectors.toMap(ReferenceCase::getReferenceCaseId, Function.identity()));
-
         return matches.stream()
-                .map(match -> {
-                    String caseId = match.embedded().metadata().getString("referenceCaseId");
-                    ReferenceCase referenceCase = caseById.get(caseId);
-                    if (referenceCase == null) {
-                        return null; // Qdrant 엔 있는데 CloudSQL 엔 없는 상태 = 데이터 불일치, 로깅 후 스킵
-                    }
-                    return new RetrievedCase(referenceCase, match.score());
-                })
-                .filter(Objects::nonNull)
+                .map(m -> new VectorSearchResult(
+                        m.embedded().metadata().getString("referenceCaseId"),
+                        m.score()))
                 .toList();
     }
 

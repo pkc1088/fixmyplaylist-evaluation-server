@@ -2,11 +2,15 @@ package evaluation.evaluationService.evaluation.adapter.out.persistence;
 
 import evaluation.evaluationService.evaluation.domain.model.enums.EvaluationLabel;
 import evaluation.evaluationService.evaluation.domain.model.enums.EvaluationStatus;
+import evaluation.evaluationService.evaluation.domain.model.vo.ReferenceTrace;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.domain.Persistable;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -53,6 +57,13 @@ public class EvaluationCaseJpaEntity implements Persistable<String> {
     @Column(nullable = true)
     private LocalDateTime reviewedAt;
 
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @SuppressWarnings("JpaAttributeTypeInspection")
+    @Column(nullable = true, columnDefinition = "json")
+    private List<ReferenceTrace> retrievedInfo;
+
+
     @Transient
     @Builder.Default
     private boolean isNew = false;
@@ -72,53 +83,4 @@ public class EvaluationCaseJpaEntity implements Persistable<String> {
     void markNotNew() {
         this.isNew = false;
     }
-
-//    @Builder
-//    private EvaluationCaseJpaEntity(
-//            String evaluationCaseId,
-//            String targetTitle,
-//            String sourceTitle,
-//            EvaluationLabel aiLabel,
-//            Double aiConfidence,
-//            EvaluationStatus evaluationStatus,
-//            EvaluationLabel humanLabel,
-//            String humanReason,
-//            LocalDateTime createdAt,
-//            LocalDateTime evaluatedAt,
-//            LocalDateTime reviewedAt
-//    ) {
-//        this.evaluationCaseId = evaluationCaseId;
-//        this.targetTitle = targetTitle;
-//        this.sourceTitle = sourceTitle;
-//        this.aiLabel = aiLabel;
-//        this.aiConfidence = aiConfidence;
-//        this.evaluationStatus = evaluationStatus;
-//        this.humanLabel = humanLabel;
-//        this.humanReason = humanReason;
-//        this.createdAt = createdAt;
-//        this.evaluatedAt = evaluatedAt;
-//        this.reviewedAt = reviewedAt;
-//    }
-//    public static EvaluationCaseJpaEntity from(EvaluationCase domain) {
-//        return EvaluationCaseJpaEntity.builder()
-//                .evaluationCaseId(domain.getEvaluationCaseId())
-//                .targetTitle(domain.getTargetTitle())
-//                .sourceTitle(domain.getSourceTitle())
-//                .aiLabel(domain.getAiLabel())
-//                .aiConfidence(domain.getAiConfidence())
-//                .evaluationStatus(domain.getEvaluationStatus())
-//                .humanLabel(domain.getHumanLabel())
-//                .humanReason(domain.getHumanReason())
-//                .createdAt(domain.getCreatedAt())
-//                .evaluatedAt(domain.getEvaluatedAt())
-//                .reviewedAt(domain.getReviewedAt())
-//                .build();
-//    }
-//
-//    public EvaluationCase toDomain() {
-//        return EvaluationCase.reconstitute(
-//                evaluationCaseId, targetTitle, sourceTitle, aiLabel, aiConfidence, evaluationStatus,
-//                humanLabel, humanReason, createdAt, evaluatedAt, reviewedAt
-//        );
-//    }
 }

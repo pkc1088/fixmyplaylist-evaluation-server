@@ -2,11 +2,14 @@ package evaluation.evaluationService.evaluation.domain.model;
 
 import evaluation.evaluationService.evaluation.domain.model.enums.EvaluationLabel;
 import evaluation.evaluationService.evaluation.domain.model.enums.EvaluationStatus;
+import evaluation.evaluationService.evaluation.domain.model.vo.ReferenceTrace;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 public class EvaluationCase {
@@ -33,6 +36,8 @@ public class EvaluationCase {
 
     private LocalDateTime reviewedAt;
 
+    private List<ReferenceTrace> retrievedInfo;
+
 
     @Builder(access = AccessLevel.PRIVATE)
     private EvaluationCase(
@@ -46,7 +51,8 @@ public class EvaluationCase {
             String humanReason,
             LocalDateTime createdAt,
             LocalDateTime evaluatedAt,
-            LocalDateTime reviewedAt
+            LocalDateTime reviewedAt,
+            List<ReferenceTrace> retrievedInfo
     ) {
         this.evaluationCaseId = evaluationCaseId;
         this.targetTitle = targetTitle;
@@ -59,6 +65,7 @@ public class EvaluationCase {
         this.createdAt = (createdAt != null) ? createdAt : LocalDateTime.now();
         this.evaluatedAt = evaluatedAt;
         this.reviewedAt = reviewedAt;
+        this.retrievedInfo = (retrievedInfo != null) ? retrievedInfo : new ArrayList<>();
 
         validate();
     }
@@ -80,12 +87,14 @@ public class EvaluationCase {
                 .sourceTitle(sourceTitle)
                 .evaluationStatus(EvaluationStatus.PENDING)
                 .createdAt(LocalDateTime.now())
+                .retrievedInfo(new ArrayList<>())
                 .build();
     }
 
     public EvaluationCase applyAiEvaluation(
             EvaluationLabel aiLabel,
-            Double aiConfidence
+            Double aiConfidence,
+            List<ReferenceTrace> retrievedReferenceIds
     ) {
         return EvaluationCase.builder()
                 .evaluationCaseId(this.evaluationCaseId)
@@ -99,6 +108,7 @@ public class EvaluationCase {
                 .createdAt(this.createdAt)
                 .evaluatedAt(LocalDateTime.now())
                 .reviewedAt(this.reviewedAt)
+                .retrievedInfo(retrievedReferenceIds)
                 .build();
     }
 
@@ -118,6 +128,7 @@ public class EvaluationCase {
                 .createdAt(this.createdAt)
                 .evaluatedAt(this.evaluatedAt)
                 .reviewedAt(LocalDateTime.now())
+                .retrievedInfo(retrievedInfo)
                 .build();
     }
 
@@ -132,7 +143,8 @@ public class EvaluationCase {
             String humanReason,
             LocalDateTime createdAt,
             LocalDateTime evaluatedAt,
-            LocalDateTime reviewedAt
+            LocalDateTime reviewedAt,
+            List<ReferenceTrace> retrievedReferenceIds
     ) {
         return EvaluationCase.builder()
                 .evaluationCaseId(evaluationCaseId)
@@ -146,6 +158,7 @@ public class EvaluationCase {
                 .createdAt(createdAt)
                 .evaluatedAt(evaluatedAt)
                 .reviewedAt(reviewedAt)
+                .retrievedInfo(retrievedReferenceIds)
                 .build();
     }
 }

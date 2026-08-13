@@ -21,6 +21,7 @@ public class EvaluationCaseMapper {
                 .createdAt(domain.getCreatedAt())
                 .evaluatedAt(domain.getEvaluatedAt())
                 .reviewedAt(domain.getReviewedAt())
+                .retrievedInfo(domain.getRetrievedInfo())
                 .isNew(isNew)
                 .build();
     }
@@ -39,7 +40,8 @@ public class EvaluationCaseMapper {
                 entity.getHumanReason(),
                 entity.getCreatedAt(),
                 entity.getEvaluatedAt(),
-                entity.getReviewedAt()
+                entity.getReviewedAt(),
+                entity.getRetrievedInfo()
         );
     }
 }

@@ -23,6 +23,9 @@ public class ReferenceCase {
     private LocalDateTime createdAt;
 
 
+    public static final int RAG_TOP_K = 5;
+
+
     @Builder(access = AccessLevel.PRIVATE)
     private ReferenceCase(
             String referenceCaseId,
