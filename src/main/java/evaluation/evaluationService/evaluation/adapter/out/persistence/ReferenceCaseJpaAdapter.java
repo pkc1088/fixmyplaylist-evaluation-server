@@ -1,12 +1,15 @@
 package evaluation.evaluationService.evaluation.adapter.out.persistence;
 
-import evaluation.evaluationService.evaluation.application.port.out.reference.QueryReferenceCasePort;
-import evaluation.evaluationService.evaluation.application.port.out.reference.CommandReferenceCasePort;
+import evaluation.evaluationService.evaluation.application.port.out.QueryReferenceCasePort;
+import evaluation.evaluationService.evaluation.application.port.out.CommandReferenceCasePort;
 import evaluation.evaluationService.evaluation.domain.model.ReferenceCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -18,16 +21,16 @@ public class ReferenceCaseJpaAdapter implements QueryReferenceCasePort, CommandR
 
     // [셋업 및 관리자 단계] ReferenceCase: Upsert & Persistable & jdbc.batch_size 최적화
     @Override
+    @Transactional
     public void saveAll(List<ReferenceCase> referenceCases) {
         if (referenceCases == null || referenceCases.isEmpty()) return;
 
-        List<String> ids = referenceCases.stream()
-                .map(ReferenceCase::getReferenceCaseId)
-                .toList();
-
-        List<String> existingIds = repository.findAllById(ids).stream()
+        Set<String> existingIds = repository
+                .findAllById(referenceCases.stream()
+                        .map(ReferenceCase::getReferenceCaseId)
+                        .toList()).stream()
                 .map(ReferenceCaseJpaEntity::getReferenceCaseId)
-                .toList();
+                .collect(Collectors.toSet());
 
         List<ReferenceCaseJpaEntity> entities = referenceCases.stream()
                 .map(rc -> {

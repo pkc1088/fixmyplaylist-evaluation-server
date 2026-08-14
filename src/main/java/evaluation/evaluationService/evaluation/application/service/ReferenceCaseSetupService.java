@@ -1,11 +1,12 @@
 package evaluation.evaluationService.evaluation.application.service;
 
 import com.opencsv.exceptions.CsvException;
-import evaluation.evaluationService.evaluation.application.port.in.ReferenceCaseSetupUseCase;
+import evaluation.evaluationService.evaluation.application.port.in.ReferenceCaseUseCase;
 import evaluation.evaluationService.evaluation.application.port.out.CsvPort;
 import evaluation.evaluationService.evaluation.application.port.out.RetrieveReferenceCasePort;
-import evaluation.evaluationService.evaluation.application.port.out.reference.CommandReferenceCasePort;
-import evaluation.evaluationService.evaluation.application.port.out.reference.QueryReferenceCasePort;
+import evaluation.evaluationService.evaluation.application.port.out.CommandReferenceCasePort;
+import evaluation.evaluationService.evaluation.application.port.out.QueryReferenceCasePort;
+import evaluation.evaluationService.evaluation.domain.exception.ReferenceCaseSetupException;
 import evaluation.evaluationService.evaluation.domain.model.ReferenceCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ReferenceCaseSetupService implements ReferenceCaseSetupUseCase {
+public class ReferenceCaseSetupService implements ReferenceCaseUseCase {
 
     private final RetrieveReferenceCasePort retrieveReferenceCasePort;
     private final CommandReferenceCasePort commandReferenceCasePort;
@@ -34,8 +35,7 @@ public class ReferenceCaseSetupService implements ReferenceCaseSetupUseCase {
             csvReferenceData = new ArrayList<>(csvPort.read());
 
         } catch(IOException | CsvException e) {
-            log.error(e.getMessage(), e);
-            return; // 커스텀 ReferenceCaseSetupException 던지기
+            throw new ReferenceCaseSetupException("CSV ReferenceData Read Exception", e);
         }
 
         commandReferenceCasePort.saveAll(csvReferenceData); // CloudSQL/MySQL 적재

@@ -1,6 +1,6 @@
 package evaluation.evaluationService.evaluation.application.port.in;
 
-public interface ReferenceCaseSetupUseCase {
+public interface ReferenceCaseUseCase {
 
     void loadCsvAndInitialize();
 

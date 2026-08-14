@@ -1,4 +1,4 @@
-package evaluation.evaluationService.evaluation.application.port.out.evaluation;
+package evaluation.evaluationService.evaluation.application.port.out;
 
 import evaluation.evaluationService.evaluation.domain.model.EvaluationCase;
 
@@ -10,5 +10,5 @@ public interface QueryEvaluationCasePort {
 
     List<EvaluationCase> loadPendingReview();       // status = AI_EVALUATED → 휴먼 리뷰 대상
 
-    boolean existsById(String recoveryId);
+    boolean existsById(String evaluationCaseId);
 }

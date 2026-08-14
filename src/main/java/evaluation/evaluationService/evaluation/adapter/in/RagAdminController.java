@@ -1,12 +1,11 @@
 package evaluation.evaluationService.evaluation.adapter.in;
 
-import evaluation.evaluationService.evaluation.application.port.in.ReferenceCaseSetupUseCase;
-import evaluation.evaluationService.evaluation.application.port.in.RecoveryEvaluationUseCase;
+import evaluation.evaluationService.evaluation.application.port.in.EvaluationCaseUseCase;
+import evaluation.evaluationService.evaluation.application.port.in.ReferenceCaseUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -14,32 +13,33 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/admin/rag")
 public class RagAdminController {
 
-    private final ReferenceCaseSetupUseCase referenceCaseSetupUseCase;
-    private final RecoveryEvaluationUseCase recoveryEvaluationUseCase;
+    private final ReferenceCaseUseCase referenceCaseUseCase;
+    private final EvaluationCaseUseCase evaluationCaseUseCase;
 
 
-    // 초기 셋업: CSV 읽고 CloudSQL 과 Qdrant 양쪽에 모두 붓는 작업
+    // 관리자 메뉴얼: CSV 읽고 CloudSQL 과 Qdrant 양쪽에 초기 셋업
     @PostMapping("/setup/initial")
     public ResponseEntity<String> setupInitialData() {
-        referenceCaseSetupUseCase.loadCsvAndInitialize();
+        referenceCaseUseCase.loadCsvAndInitialize();
         return ResponseEntity.ok("CSV 데이터 기반 초기 세팅 완료");
     }
 
-    // 모델 교체 대비: 기존 CloudSQL 에 있는 데이터만 읽어서 Qdrant 에 새로 임베딩해서 덮어쓰는 작업
+    // 관리자 메뉴얼: 실패 대응, 모델 교체 대비, 기존 CloudSQL 에 있는 데이터만 읽어서 Qdrant 에 새로 임베딩해서 덮어씀
     @PostMapping("/setup/reindex")
     public ResponseEntity<String> reindexAllVectors() {
-        referenceCaseSetupUseCase.reindexAllFromDatabase();
+        referenceCaseUseCase.reindexAllFromDatabase();
         return ResponseEntity.ok("Qdrant 전체 재색인 완료");
     }
 
-    // Kafka 컨슘 실패나 장애로 인해 PENDING 상태로 멈춰있는 데이터들을 수동으로 재처리 (배치 대용)
+    // 자동화: 신규 데이터 혹은 장애 이후의 PENDING 데이터들 평가
     @PostMapping("/evaluate/pending")
     public ResponseEntity<String> evaluatePendingCases() {
-        recoveryEvaluationUseCase.evaluatePendingCases();
+        evaluationCaseUseCase.evaluatePendingCases();
         return ResponseEntity.ok("PENDING 상태 케이스 일괄 평가 완료");
     }
 
     /*
+    // 추후 논의
     @PostMapping("/promote/{evaluationCaseId}")
     public ResponseEntity<String> promoteToReference(
             @PathVariable String evaluationCaseId,

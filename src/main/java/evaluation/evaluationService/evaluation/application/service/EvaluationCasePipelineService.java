@@ -1,13 +1,13 @@
 package evaluation.evaluationService.evaluation.application.service;
 
-import evaluation.evaluationService.evaluation.application.port.in.RecoveryEvaluationUseCase;
+import evaluation.evaluationService.evaluation.application.port.in.EvaluationCaseUseCase;
 import evaluation.evaluationService.evaluation.application.port.out.EvaluateRecoveryPort;
 import evaluation.evaluationService.evaluation.application.port.out.dto.VectorSearchResult;
-import evaluation.evaluationService.evaluation.application.port.out.evaluation.CommandEvaluationCasePort;
-import evaluation.evaluationService.evaluation.application.port.out.evaluation.QueryEvaluationCasePort;
+import evaluation.evaluationService.evaluation.application.port.out.CommandEvaluationCasePort;
+import evaluation.evaluationService.evaluation.application.port.out.QueryEvaluationCasePort;
 import evaluation.evaluationService.evaluation.application.port.out.RetrieveReferenceCasePort;
 import evaluation.evaluationService.evaluation.application.port.out.dto.EvaluationResult;
-import evaluation.evaluationService.evaluation.application.port.out.reference.QueryReferenceCasePort;
+import evaluation.evaluationService.evaluation.application.port.out.QueryReferenceCasePort;
 import evaluation.evaluationService.evaluation.domain.model.EvaluationCase;
 import evaluation.evaluationService.evaluation.domain.model.ReferenceCase;
 import evaluation.evaluationService.evaluation.domain.model.vo.ReferenceTrace;
@@ -27,7 +27,7 @@ import static evaluation.evaluationService.evaluation.domain.model.ReferenceCase
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RecoveryEvaluationService implements RecoveryEvaluationUseCase {
+public class EvaluationCasePipelineService implements EvaluationCaseUseCase {
 
     private final CommandEvaluationCasePort commandEvaluationCasePort;
     private final RetrieveReferenceCasePort retrieveReferenceCasePort;
@@ -37,6 +37,10 @@ public class RecoveryEvaluationService implements RecoveryEvaluationUseCase {
 
 
     public void evaluatePendingCases() {
+        // loadPendingEvaluation 가 진입점이 아니라 카프카 수동 풀링이 먼저 나오고
+        // '복구 서버'가 발행한 신규 데이터들을 컨슘해서  EvaluationCase 테이블에 저장해서 Inbox 로 중복 수신 체크하고,
+        // RAG+LLM 기반 평가 수행한뒤 해당 신규 데이터들의 ai_label, ai_confidence 및 status 업데이트하고,
+        // 그 이후 loadPendingEvaluation()로 싹 긁어와서 다시 파이프라인 수행해서 비정상 케이스(PENDING)에 대해 처리(at-least-once)가 맞긴함.
         List<EvaluationCase> pendingCases = queryEvaluationCasePort.loadPendingEvaluation();
         log.info("평가 대상 {}건 로드", pendingCases.size());
 
@@ -85,21 +89,5 @@ public class RecoveryEvaluationService implements RecoveryEvaluationUseCase {
         log.info("평가 완료 recoveryId={} label={} similarityScore={} 참조건수={}",
                 evaluationCase.getEvaluationCaseId(), result.label(), result.confidence(), similarCases.size()
         );
-    }
-
-    private void setUp() {
-        // 0. 휴먼 라벨링 완료된 CSV 읽어서 DB 에 저장
-
-        // 1. 휴먼 라벨링 완료된 CSV 읽어서 임베딩(index) 후 Qdrant 에 저장 (초기 셋업)
-
-        // 2. 로컬 DB 에서 EvaluationCase 중 Pending 된 애들 읽기
-
-        // 3. 벡터화 시켜서 retrieve 하기
-
-        // 4. RAG 으로 확보한 Top K 를 추가 정보한 뒤 LLM 호출해서 응답받기
-
-        // 5. 응답 파싱 후 EvaluationCase 상태(AiLabel, Confidence) 업데이트
-
-        // 6. Evaluation 을 ReferenceCase 로 승격 시키는 로직은 차후 구현
     }
 }

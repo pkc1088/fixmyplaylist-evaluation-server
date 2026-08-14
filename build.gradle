@@ -48,6 +48,9 @@ dependencies {
 	implementation 'com.opencsv:opencsv:5.9'
 	// Qdrant
 	implementation 'dev.langchain4j:langchain4j-qdrant:1.18.1-beta28'
+	// @Retryable
+	implementation 'org.springframework.retry:spring-retry'
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
 }
 
 tasks.named('test') {
