@@ -39,6 +39,6 @@ public class EvaluationCaseInboxService {
     )
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateEvaluationResult(EvaluationCase evaluated) {
-        commandEvaluationCasePort.update(evaluated);
+        commandEvaluationCasePort.update(evaluated); // 추후 @Modifying @Query 고려 가능.
     }
 }

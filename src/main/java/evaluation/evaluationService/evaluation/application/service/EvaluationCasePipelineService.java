@@ -44,7 +44,7 @@ public class EvaluationCasePipelineService implements EvaluationCaseUseCase {
             public void process(RecoveryCompletedEvent event) {
                 boolean isNew = evaluationCaseInboxService.saveToInboxIdempotent(event);
                 if (!isNew) {
-                    log.debug("이미 수신된 이벤트, 스킵 eventId={}", event.eventId());
+                    log.info("이미 수신된 이벤트, 스킵 eventId={}", event.eventId());
                 }
             }
 
@@ -103,7 +103,7 @@ public class EvaluationCasePipelineService implements EvaluationCaseUseCase {
 
         evaluationCaseInboxService.updateEvaluationResult(evaluated);
 
-        log.info("평가 완료 recoveryId={} label={} similarityScore={} 참조건수={}",
+        log.info("평가 완료: evaluationCaseId={}, label={}, similarityScore={}, 참조건수={}",
                 evaluationCase.getEvaluationCaseId(), result.label(), result.confidence(), similarCases.size()
         );
     }

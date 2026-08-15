@@ -19,7 +19,7 @@ public class ConfluentKafkaConfig {
 
     @Bean
     public MessagePullPort recoveryCompletedTopic(
-            @Value("${app.kafka.topic.recovery-completed}") String topicName,
+            @Value("${app.kafka.topic.recovery-evaluation}") String topicName,
             ConsumerFactory<String, String> consumerFactory,
             ObjectMapper objectMapper
     ) {
@@ -28,7 +28,7 @@ public class ConfluentKafkaConfig {
 
     @Bean
     public DlqPort recoveryDlqTopic(
-            @Value("${app.kafka.topic.recovery-dlq}") String topicName,
+            @Value("${app.kafka.topic.evaluation-dlq}") String topicName,
             KafkaTemplate<String, String> kafkaTemplate)
     {
         return new KafkaDlqAdapter(kafkaTemplate, topicName);
