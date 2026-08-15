@@ -30,7 +30,7 @@ public class ReferenceCasePromotionService {
         EvaluationCase reviewed = evaluationCase.applyHumanReview(humanLabel, humanReason);
 
         ReferenceCase referenceCase = ReferenceCase.create(
-                reviewed.getEvaluationCaseId(), // evaluateCaseId == referenceCaseId
+                reviewed.getEvaluationCaseId(), // evaluationCaseId == referenceCaseId
                 reviewed.getTargetTitle(),
                 reviewed.getSourceTitle(),
                 reviewed.getHumanLabel(),

@@ -51,6 +51,9 @@ dependencies {
 	// @Retryable
 	implementation 'org.springframework.retry:spring-retry'
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	// Kafka
+	implementation 'org.springframework.kafka:spring-kafka'
+	testImplementation 'org.springframework.kafka:spring-kafka-test'
 }
 
 tasks.named('test') {

@@ -1,13 +1,10 @@
 package evaluation.evaluationService.evaluation.application.service;
 
 import evaluation.evaluationService.evaluation.application.port.in.EvaluationCaseUseCase;
-import evaluation.evaluationService.evaluation.application.port.out.EvaluateRecoveryPort;
+import evaluation.evaluationService.evaluation.application.port.out.*;
+import evaluation.evaluationService.evaluation.application.port.out.dto.RecoveryCompletedEvent;
 import evaluation.evaluationService.evaluation.application.port.out.dto.VectorSearchResult;
-import evaluation.evaluationService.evaluation.application.port.out.CommandEvaluationCasePort;
-import evaluation.evaluationService.evaluation.application.port.out.QueryEvaluationCasePort;
-import evaluation.evaluationService.evaluation.application.port.out.RetrieveReferenceCasePort;
 import evaluation.evaluationService.evaluation.application.port.out.dto.EvaluationResult;
-import evaluation.evaluationService.evaluation.application.port.out.QueryReferenceCasePort;
 import evaluation.evaluationService.evaluation.domain.model.EvaluationCase;
 import evaluation.evaluationService.evaluation.domain.model.ReferenceCase;
 import evaluation.evaluationService.evaluation.domain.model.vo.ReferenceTrace;
@@ -29,27 +26,46 @@ import static evaluation.evaluationService.evaluation.domain.model.ReferenceCase
 @RequiredArgsConstructor
 public class EvaluationCasePipelineService implements EvaluationCaseUseCase {
 
-    private final CommandEvaluationCasePort commandEvaluationCasePort;
+    private final EvaluationCaseInboxService evaluationCaseInboxService;
     private final RetrieveReferenceCasePort retrieveReferenceCasePort;
     private final QueryEvaluationCasePort queryEvaluationCasePort;
     private final QueryReferenceCasePort queryReferenceCasePort;
     private final EvaluateRecoveryPort evaluateRecoveryPort;
+    private final MessagePullPort messagePullPort;
+    private final DlqPort dlqPort;
 
 
     public void evaluatePendingCases() {
-        // loadPendingEvaluation 가 진입점이 아니라 카프카 수동 풀링이 먼저 나오고
-        // '복구 서버'가 발행한 신규 데이터들을 컨슘해서  EvaluationCase 테이블에 저장해서 Inbox 로 중복 수신 체크하고,
-        // RAG+LLM 기반 평가 수행한뒤 해당 신규 데이터들의 ai_label, ai_confidence 및 status 업데이트하고,
-        // 그 이후 loadPendingEvaluation()로 싹 긁어와서 다시 파이프라인 수행해서 비정상 케이스(PENDING)에 대해 처리(at-least-once)가 맞긴함.
+
+        // Kafka 수동 폴링 — Inbox 적재까지만
+        int consumed = messagePullPort.pullAndProcess(new EventProcessor() {
+
+            @Override
+            public void process(RecoveryCompletedEvent event) {
+                boolean isNew = evaluationCaseInboxService.saveToInboxIdempotent(event);
+                if (!isNew) {
+                    log.debug("이미 수신된 이벤트, 스킵 eventId={}", event.eventId());
+                }
+            }
+
+            @Override
+            public void onFail(String rawMessage) {
+                dlqPort.sendToDlq(rawMessage);
+            }
+        });
+
+        log.info("Kafka 신규 수신 {}건", consumed);
+
+        // PENDING 전체 평가 — 방금 들어온 신규 건 + 과거 장애로 남은 잔여 건
         List<EvaluationCase> pendingCases = queryEvaluationCasePort.loadPendingEvaluation();
-        log.info("평가 대상 {}건 로드", pendingCases.size());
+        log.info("평가 대상 {}건", pendingCases.size());
 
         for (EvaluationCase evaluationCase : pendingCases) {
             try {
                 evaluateOne(evaluationCase);
 
             } catch (Exception e) {
-                log.error("평가 실패 recoveryId={}", evaluationCase.getEvaluationCaseId(), e);
+                log.error("평가 실패, PENDING 유지(다음 실행에서 재시도) recoveryId={}", evaluationCase.getEvaluationCaseId(), e);
             }
         }
     }
@@ -84,7 +100,8 @@ public class EvaluationCasePipelineService implements EvaluationCaseUseCase {
                 result.confidence(),
                 refInfo
         );
-        commandEvaluationCasePort.update(evaluated);
+
+        evaluationCaseInboxService.updateEvaluationResult(evaluated);
 
         log.info("평가 완료 recoveryId={} label={} similarityScore={} 참조건수={}",
                 evaluationCase.getEvaluationCaseId(), result.label(), result.confidence(), similarCases.size()

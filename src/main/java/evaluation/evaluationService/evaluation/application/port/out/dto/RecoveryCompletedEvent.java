@@ -1,5 +1,8 @@
 package evaluation.evaluationService.evaluation.application.port.out.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record RecoveryCompletedEvent(
         String eventId, // 아마도 "MDC 작업 UUID + ActionLog PK 번호"
         String targetTitle,

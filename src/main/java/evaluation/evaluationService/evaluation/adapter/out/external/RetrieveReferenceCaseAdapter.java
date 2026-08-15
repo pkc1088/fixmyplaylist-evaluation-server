@@ -65,7 +65,7 @@ public class RetrieveReferenceCaseAdapter implements RetrieveReferenceCasePort {
 
     private TextSegment toEmbeddingSegment(ReferenceCase referenceCase) {
         Metadata metadata = new Metadata();
-        metadata.put("referenceCaseId", referenceCase.getReferenceCaseId()); // Qdrant Point Payload 에 caseId 저장
+        metadata.put("referenceCaseId", referenceCase.getReferenceCaseId());
 
         return TextSegment.from(
                 toEmbeddingText(referenceCase.getTargetTitle(), referenceCase.getSourceTitle()),

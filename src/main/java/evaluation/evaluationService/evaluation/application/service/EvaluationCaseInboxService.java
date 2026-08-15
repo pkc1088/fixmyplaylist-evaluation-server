@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class EvaluationInboxService {
+public class EvaluationCaseInboxService {
 
     private final CommandEvaluationCasePort commandEvaluationCasePort;
 
