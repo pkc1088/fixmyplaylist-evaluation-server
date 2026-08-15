@@ -16,18 +16,15 @@
 
 - **Language**: Java 17
 - **Framework**: Spring Boot 3.4.4
-- **LLM Framework**: LangChain4j
+- **AI Framework**: LangChain4j
+- **Database**: MySQL 8.0
+- **Vector Database:** Qdrant
+- **Persistence**: Spring Data JPA
 - **LLM**: Gemini 2.5 Flash Lite
-- **Embedding**: Gemini Embedding 001
-- **Evaluation**: Human-labeled Reference Dataset
-- **Vector Search:** CloudSQL(Prod), In-Memory Embedding Store(Test)
-- **Infra**: 
-- **Database**: 
-- **Persistence**: 
-- **Message Broker**: 
-- **Monitoring**: 
-- **Scheduler**: 
-- **Security**: 
+- **Embedding Model**: Gemini Embedding 001
+- **Infra**: Cloud SQL, Confluent Cloud, Qdrant Cloud, [In Progress]
+- **Message**: Apache Kafka
+- **Monitoring**: [In Progress]
 
 ---
 ## Architecture Design

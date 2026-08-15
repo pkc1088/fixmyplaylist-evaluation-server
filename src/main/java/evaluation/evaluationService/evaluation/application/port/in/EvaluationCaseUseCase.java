@@ -1,6 +1,6 @@
 package evaluation.evaluationService.evaluation.application.port.in;
 
-public interface RunEvaluationUseCase {
+public interface EvaluationCaseUseCase {
 
-    void run();
+    void evaluatePendingCases();
 }

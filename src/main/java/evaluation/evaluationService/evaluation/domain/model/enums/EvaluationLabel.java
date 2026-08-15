@@ -1,6 +1,6 @@
 package evaluation.evaluationService.evaluation.domain.model.enums;
 
-public enum HumanLabel {
+public enum EvaluationLabel {
     SUCCESS,
     FAIL
 }
