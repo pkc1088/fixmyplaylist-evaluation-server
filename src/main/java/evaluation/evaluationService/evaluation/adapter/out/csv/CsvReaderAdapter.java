@@ -1,37 +1,57 @@
 package evaluation.evaluationService.evaluation.adapter.out.csv;
 
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import evaluation.evaluationService.evaluation.application.port.out.CsvPort;
 import evaluation.evaluationService.evaluation.domain.model.ReferenceCase;
 import evaluation.evaluationService.evaluation.domain.model.enums.EvaluationLabel;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.channels.Channels;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-@Component
+@RequiredArgsConstructor
 public class CsvReaderAdapter implements CsvPort {
 
-    private static final String CSV_PATH = "data/recovery_cases.csv";
+    private final String bucketName;
+    private final String pathName;
 
 
     @Override
     public List<ReferenceCase> read() throws IOException, CsvException {
 
-        ClassPathResource resource = new ClassPathResource(CSV_PATH);
-
-        try (Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
+        try (Reader reader = createReader();
              CSVReader csvReader = new CSVReader(reader)) {
 
             return csvReader.readAll().stream()
                     .skip(1)
                     .map(this::toCase)
                     .toList();
+        }
+    }
+
+    private Reader createReader() throws IOException {
+        if (StringUtils.hasText(bucketName)) {
+
+            Storage storage = StorageOptions.getDefaultInstance().getService();
+            Blob blob = storage.get(bucketName, pathName);
+            if (blob == null) {
+                throw new IOException("GCS에서 CSV를 찾을 수 없습니다: " + pathName);
+            }
+            return new InputStreamReader(Channels.newInputStream(blob.reader()), StandardCharsets.UTF_8);
+
+        } else {
+            ClassPathResource resource = new ClassPathResource(pathName);
+            return new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
         }
     }
 

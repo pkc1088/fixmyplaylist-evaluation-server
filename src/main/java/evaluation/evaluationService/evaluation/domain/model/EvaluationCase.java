@@ -38,6 +38,10 @@ public class EvaluationCase {
 
     private List<ReferenceTrace> retrievedInfo;
 
+    private static final int MAX_EVALUATION_CASE_ID_LENGTH = 100;
+    private static final int MAX_TARGET_TITLE_LENGTH = 255;
+    private static final int MAX_SOURCE_TITLE_LENGTH = 255;
+
 
     @Builder(access = AccessLevel.PRIVATE)
     private EvaluationCase(
@@ -55,8 +59,8 @@ public class EvaluationCase {
             List<ReferenceTrace> retrievedInfo
     ) {
         this.evaluationCaseId = evaluationCaseId;
-        this.targetTitle = targetTitle;
-        this.sourceTitle = sourceTitle;
+        this.targetTitle = truncate(targetTitle, MAX_TARGET_TITLE_LENGTH);
+        this.sourceTitle = truncate(sourceTitle, MAX_SOURCE_TITLE_LENGTH);
         this.aiLabel = aiLabel;
         this.aiConfidence = aiConfidence;
         this.evaluationStatus = evaluationStatus;
@@ -70,9 +74,23 @@ public class EvaluationCase {
         validate();
     }
 
+    private static String truncate(String value, int maxLength) {
+        if (value == null) return null;
+        return value.length() > maxLength ? value.substring(0, maxLength) : value;
+    }
+
     private void validate() {
-        if (targetTitle == null || sourceTitle == null) {
-            throw new IllegalArgumentException("Title must not be null");
+        if (evaluationCaseId == null || evaluationCaseId.isBlank() || evaluationCaseId.length() > MAX_EVALUATION_CASE_ID_LENGTH) {
+            throw new IllegalArgumentException("EvaluationCaseId must not be null");
+        }
+        if (targetTitle == null || targetTitle.isBlank() || targetTitle.length() > MAX_TARGET_TITLE_LENGTH) {
+            throw new IllegalArgumentException("TargetTitle must not be null");
+        }
+        if (sourceTitle == null || sourceTitle.isBlank() || sourceTitle.length() > MAX_SOURCE_TITLE_LENGTH) {
+            throw new IllegalArgumentException("SourceTitle must not be null");
+        }
+        if (this.evaluationStatus == null) {
+            throw new IllegalArgumentException("EvaluationStatus cannot be null");
         }
     }
 

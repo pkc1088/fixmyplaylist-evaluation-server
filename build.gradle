@@ -54,6 +54,9 @@ dependencies {
 	// Kafka
 	implementation 'org.springframework.kafka:spring-kafka'
 	testImplementation 'org.springframework.kafka:spring-kafka-test'
+	// GCS
+	implementation 'com.google.cloud:google-cloud-storage'
+	implementation platform('com.google.cloud:libraries-bom:26.86.0')
 }
 
 tasks.named('test') {
