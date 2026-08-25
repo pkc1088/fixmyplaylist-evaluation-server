@@ -51,7 +51,7 @@ public class EvaluationCaseJpaAdapter implements CommandEvaluationCasePort, Quer
 
     @Override
     public List<EvaluationCase> loadPendingEvaluation() {
-        return repository.findByEvaluationStatus(EvaluationStatus.PENDING).stream()
+        return repository.findByEvaluationStatusIn(List.of(EvaluationStatus.PENDING, EvaluationStatus.FAILED)).stream()
                 .map(mapper::toDomain)
                 .toList();
     }

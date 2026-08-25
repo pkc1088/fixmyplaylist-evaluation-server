@@ -26,6 +26,8 @@ public class EvaluationCase {
 
     private EvaluationStatus evaluationStatus;
 
+    private int retryCount;
+
     private EvaluationLabel humanLabel;
 
     private String humanReason;
@@ -42,6 +44,8 @@ public class EvaluationCase {
     private static final int MAX_TARGET_TITLE_LENGTH = 255;
     private static final int MAX_SOURCE_TITLE_LENGTH = 255;
 
+    public static final int MAX_RETRY_COUNT = 3;
+
 
     @Builder(access = AccessLevel.PRIVATE)
     private EvaluationCase(
@@ -51,6 +55,7 @@ public class EvaluationCase {
             EvaluationLabel aiLabel,
             Double aiConfidence,
             EvaluationStatus evaluationStatus,
+            Integer retryCount,
             EvaluationLabel humanLabel,
             String humanReason,
             LocalDateTime createdAt,
@@ -64,6 +69,7 @@ public class EvaluationCase {
         this.aiLabel = aiLabel;
         this.aiConfidence = aiConfidence;
         this.evaluationStatus = evaluationStatus;
+        this.retryCount = (retryCount != null) ? retryCount : 0;
         this.humanLabel = humanLabel;
         this.humanReason = humanReason;
         this.createdAt = (createdAt != null) ? createdAt : LocalDateTime.now();
@@ -104,50 +110,47 @@ public class EvaluationCase {
                 .targetTitle(targetTitle)
                 .sourceTitle(sourceTitle)
                 .evaluationStatus(EvaluationStatus.PENDING)
+                .retryCount(0)
                 .createdAt(LocalDateTime.now())
                 .retrievedInfo(new ArrayList<>())
                 .build();
     }
 
-    public EvaluationCase applyAiEvaluation(
+    public void handleFailure() {
+        if (this.retryCount >= MAX_RETRY_COUNT - 1) {
+            this.evaluationStatus = EvaluationStatus.DEAD;
+        } else {
+            this.evaluationStatus = EvaluationStatus.FAILED;
+            this.retryCount++;
+        }
+
+        validate();
+    }
+
+    public void applyAiEvaluation(
             EvaluationLabel aiLabel,
             Double aiConfidence,
             List<ReferenceTrace> retrievedReferenceIds
     ) {
-        return EvaluationCase.builder()
-                .evaluationCaseId(this.evaluationCaseId)
-                .targetTitle(this.targetTitle)
-                .sourceTitle(this.sourceTitle)
-                .aiLabel(aiLabel)
-                .aiConfidence(aiConfidence)
-                .evaluationStatus(EvaluationStatus.AI_EVALUATED)
-                .humanLabel(this.humanLabel)
-                .humanReason(this.humanReason)
-                .createdAt(this.createdAt)
-                .evaluatedAt(LocalDateTime.now())
-                .reviewedAt(this.reviewedAt)
-                .retrievedInfo(retrievedReferenceIds)
-                .build();
+        this.aiLabel = aiLabel;
+        this.aiConfidence = aiConfidence;
+        this.evaluationStatus = EvaluationStatus.AI_EVALUATED;
+        this.evaluatedAt = LocalDateTime.now();
+        this.retrievedInfo = retrievedReferenceIds;
+
+        validate();
     }
 
-    public EvaluationCase applyHumanReview(
+    public void applyHumanReview(
             EvaluationLabel humanLabel,
             String humanReason
     ) {
-        return EvaluationCase.builder()
-                .evaluationCaseId(this.evaluationCaseId)
-                .targetTitle(this.targetTitle)
-                .sourceTitle(this.sourceTitle)
-                .aiLabel(this.aiLabel)
-                .aiConfidence(this.aiConfidence)
-                .evaluationStatus(EvaluationStatus.HUMAN_REVIEWED)
-                .humanLabel(humanLabel)
-                .humanReason(humanReason)
-                .createdAt(this.createdAt)
-                .evaluatedAt(this.evaluatedAt)
-                .reviewedAt(LocalDateTime.now())
-                .retrievedInfo(retrievedInfo)
-                .build();
+        this.evaluationStatus = EvaluationStatus.HUMAN_REVIEWED;
+        this.humanLabel = humanLabel;
+        this.humanReason = humanReason;
+        this.reviewedAt = LocalDateTime.now();
+
+        validate();
     }
 
     public static EvaluationCase reconstitute(
@@ -157,6 +160,7 @@ public class EvaluationCase {
             EvaluationLabel aiLabel,
             Double aiConfidence,
             EvaluationStatus evaluationStatus,
+            Integer retryCount,
             EvaluationLabel humanLabel,
             String humanReason,
             LocalDateTime createdAt,
@@ -171,6 +175,7 @@ public class EvaluationCase {
                 .aiLabel(aiLabel)
                 .aiConfidence(aiConfidence)
                 .evaluationStatus(evaluationStatus)
+                .retryCount(retryCount)
                 .humanLabel(humanLabel)
                 .humanReason(humanReason)
                 .createdAt(createdAt)
