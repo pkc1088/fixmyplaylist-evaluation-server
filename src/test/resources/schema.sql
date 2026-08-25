@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS evaluation_cases (
     ai_label VARCHAR(20) DEFAULT NULL,
     ai_confidence DOUBLE DEFAULT NULL,
     evaluation_status VARCHAR(20) NOT NULL,
+    retry_count INT NOT NULL DEFAULT 0,
     human_label VARCHAR(20) DEFAULT NULL,
     human_reason TEXT DEFAULT NULL,
     created_at DATETIME(6) NOT NULL,

@@ -56,7 +56,7 @@ public class EvaluationCasePipelineService implements EvaluationCaseUseCase {
 
         log.info("Kafka 신규 수신 {}건", consumed);
 
-        // PENDING 전체 평가 — 방금 들어온 신규 건 + 과거 장애로 남은 잔여 건
+        // 전체 평가 — 방금 들어온 신규 건 + 과거 장애로 남은 잔여 건
         List<EvaluationCase> pendingCases = queryEvaluationCasePort.loadPendingEvaluation();
         log.info("평가 대상 {}건", pendingCases.size());
 
@@ -65,7 +65,17 @@ public class EvaluationCasePipelineService implements EvaluationCaseUseCase {
                 evaluateOne(evaluationCase);
 
             } catch (Exception e) {
-                log.error("평가 실패, PENDING 유지(다음 실행에서 재시도) recoveryId={}", evaluationCase.getEvaluationCaseId(), e);
+
+                evaluationCase.handleFailure();
+                log.info("[AI 평가 실패] recoveryId={}", evaluationCase.getEvaluationCaseId(), e);
+            }
+
+            try {
+                evaluationCaseInboxService.updateEvaluationResult(evaluationCase);
+
+            } catch (Exception e) {
+
+                log.error("[DB 업데이트 실패] 다음 건으로 넘어갑니다. recoveryId={}", evaluationCase.getEvaluationCaseId(), e);
             }
         }
     }
@@ -95,16 +105,14 @@ public class EvaluationCasePipelineService implements EvaluationCaseUseCase {
                 .map(rc -> new ReferenceTrace(rc.referenceCase().getReferenceCaseId(), rc.similarityScore()))
                 .toList();
 
-        EvaluationCase evaluated = evaluationCase.applyAiEvaluation(
+        evaluationCase.applyAiEvaluation(result.label(), result.confidence(), refInfo);
+
+        log.info(
+                "[AI 평가 완료]: evaluationCaseId={}, label={}, similarityScore={}, 참조건수={}",
+                evaluationCase.getEvaluationCaseId(),
                 result.label(),
                 result.confidence(),
-                refInfo
-        );
-
-        evaluationCaseInboxService.updateEvaluationResult(evaluated);
-
-        log.info("평가 완료: evaluationCaseId={}, label={}, similarityScore={}, 참조건수={}",
-                evaluationCase.getEvaluationCaseId(), result.label(), result.confidence(), similarCases.size()
+                similarCases.size()
         );
     }
 }

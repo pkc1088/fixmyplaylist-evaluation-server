@@ -41,6 +41,9 @@ public class EvaluationCaseJpaEntity implements Persistable<String> {
     @Column(nullable = false, length = 20)
     private EvaluationStatus evaluationStatus;
 
+    @Column(nullable = false)
+    private int retryCount;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = true, length = 20)
     private EvaluationLabel humanLabel;

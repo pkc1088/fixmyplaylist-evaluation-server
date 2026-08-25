@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface EvaluationCaseSdjRepository extends JpaRepository<EvaluationCaseJpaEntity, String> {
 
-    List<EvaluationCaseJpaEntity> findByEvaluationStatus(EvaluationStatus status);
+    List<EvaluationCaseJpaEntity> findByEvaluationStatusIn(List<EvaluationStatus> status);
 
     List<EvaluationCaseJpaEntity> findByEvaluationStatusOrderByAiConfidenceAsc(EvaluationStatus status);
 }

@@ -27,20 +27,20 @@ public class ReferenceCasePromotionService {
             EvaluationLabel humanLabel,
             String humanReason
     ) {
-        EvaluationCase reviewed = evaluationCase.applyHumanReview(humanLabel, humanReason);
+        evaluationCase.applyHumanReview(humanLabel, humanReason);
 
         ReferenceCase referenceCase = ReferenceCase.create(
-                reviewed.getEvaluationCaseId(), // evaluationCaseId == referenceCaseId
-                reviewed.getTargetTitle(),
-                reviewed.getSourceTitle(),
-                reviewed.getHumanLabel(),
-                reviewed.getHumanReason()
+                evaluationCase.getEvaluationCaseId(), // evaluationCaseId == referenceCaseId
+                evaluationCase.getTargetTitle(),
+                evaluationCase.getSourceTitle(),
+                evaluationCase.getHumanLabel(),
+                evaluationCase.getHumanReason()
         );
 
         // outbox 패턴 필요함
         // save 는 isNew = true 강제함. 평가를 재수정하면 문제 생길수도 (근데 그건 Promote 역할이 아니라 다른 클래스기 처리하게 하면 됨)
         commandReferenceCasePort.save(referenceCase);               // 1. CloudSQL: source of truth
-        commandEvaluationCasePort.update(reviewed);                 // 2. EvaluationCase → HUMAN_REVIEWED
+        commandEvaluationCasePort.update(evaluationCase);           // 2. EvaluationCase → HUMAN_REVIEWED
         retrieveReferenceCasePort.index(List.of(referenceCase));    // 3. Qdrant: 색인
     }
 }

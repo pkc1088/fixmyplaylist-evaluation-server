@@ -16,6 +16,7 @@ public class EvaluationCaseMapper {
                 .aiLabel(domain.getAiLabel())
                 .aiConfidence(domain.getAiConfidence())
                 .evaluationStatus(domain.getEvaluationStatus())
+                .retryCount(domain.getRetryCount())
                 .humanLabel(domain.getHumanLabel())
                 .humanReason(domain.getHumanReason())
                 .createdAt(domain.getCreatedAt())
@@ -36,6 +37,7 @@ public class EvaluationCaseMapper {
                 entity.getAiLabel(),
                 entity.getAiConfidence(),
                 entity.getEvaluationStatus(),
+                entity.getRetryCount(),
                 entity.getHumanLabel(),
                 entity.getHumanReason(),
                 entity.getCreatedAt(),
