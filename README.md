@@ -15,16 +15,16 @@
 ## Architecture & Tech Stack
 
 - **Language**: Java 17
-- **Framework**: Spring Boot 3.4.4
+- **Framework**: Spring Boot 3.4
 - **AI Framework**: LangChain4j
 - **Database**: MySQL 8.0
 - **Vector Database:** Qdrant
 - **Persistence**: Spring Data JPA
-- **LLM**: Gemini 2.5 Flash Lite
-- **Embedding Model**: Gemini Embedding 001
-- **Infra**: Cloud SQL, Confluent Cloud, Qdrant Cloud, [In Progress]
-- **Message**: Apache Kafka
-- **Monitoring**: [In Progress]
+- **LLM**: Gemini Series
+- **Embedding Model**: Gemini Embedding
+- **Infra**: Google Cloud Run, Cloud SQL, Cloud Scheduler, Confluent Cloud, Qdrant Cloud
+- **Message Broker**: Apache Kafka
+- **Monitoring**: Google Cloud Monitoring, Google Cloud Mobile App
 
 ---
 ## Architecture Design
