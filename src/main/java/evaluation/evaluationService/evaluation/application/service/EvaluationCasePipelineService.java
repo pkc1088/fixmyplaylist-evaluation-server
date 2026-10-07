@@ -108,7 +108,7 @@ public class EvaluationCasePipelineService implements EvaluationCaseUseCase {
         evaluationCase.applyAiEvaluation(result.label(), result.confidence(), refInfo);
 
         log.info(
-                "[AI 평가 완료]: evaluationCaseId={}, label={}, similarityScore={}, 참조건수={}",
+                "[AI 평가 완료]: evaluationCaseId={}, label={}, confidence={}, 참조건수={}",
                 evaluationCase.getEvaluationCaseId(),
                 result.label(),
                 result.confidence(),
