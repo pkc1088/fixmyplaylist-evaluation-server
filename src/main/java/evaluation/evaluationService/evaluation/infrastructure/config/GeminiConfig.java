@@ -34,7 +34,7 @@ public class GeminiConfig {
     ) {
         return GoogleAiGeminiChatModel.builder()
                 .apiKey(apiKey)
-                .modelName("gemini-2.5-flash-lite")
+                .modelName("gemini-3.5-flash-lite")
                 .temperature(0.0)
                 .maxOutputTokens(256)
                 .timeout(Duration.ofSeconds(30))
