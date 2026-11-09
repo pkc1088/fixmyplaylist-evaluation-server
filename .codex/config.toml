@@ -1,0 +1,20 @@
+default_permissions = "src-only"
+
+[permissions.src-only]
+description = "Allow source editing and build configuration reads."
+extends = ":read-only"
+
+[permissions.src-only.filesystem]
+":root" = "deny"
+":minimal" = "read"
+"/home/pyeon/.codex/packages/app-server-daemon" = "read"
+
+[permissions.src-only.filesystem.":workspace_roots"]
+"src" = "write"
+"docs" = "write"
+"README.md" = "read"
+"AGENTS.md" = "read"
+"build.gradle" = "read"
+"settings.gradle" = "read"
+"gradlew" = "read"
+"gradle" = "read"
