@@ -1,7 +1,7 @@
 # 아키텍처
 
 평가 서버는 복구 서버가 발행한 "복구 완료" 이벤트를 받아 저장하고, 사람이 검증한 과거 사례를 근거로 Gemini가 복구 결과를 판정하게 한 뒤, 그 결과를 DB에 남긴다. 
-상시 실행되는 리스너 없이, 예정된 Cloud Scheduler가 호출하는 HTTP 엔드포인트가 한 번 실행될 때마다 처리가 일어나는 구조다. 평가는 1일 1회 수행된다.
+1일 1회, Cloud Scheduler에 의해 Cloud Run(요청 기반, min-instance 0) 인스턴스가 깨어나 특정 HTTP 엔드포인트가 트리거되며 Kafka 이벤트 컨슘(수동 풀링, 상시 실행되는 리스너 없음)과 판정을 진행한다.
 
 ## 패키지와 계층, 의존 방향 규칙
 기준 패키지는 `evaluation.evaluationService.evaluation`이며 헥사고날(Ports & Adapters) 구조다.
@@ -32,7 +32,7 @@
 
 ## 외부 의존성과 경계
 - Kafka(Confluent Cloud): 입력 토픽 읽기, DLQ 토픽 쓰기. 이벤트 발행자는 이 저장소 밖의 복구 서버다. 이 서비스는 읽기와 DLQ 쓰기만 한다.
-- Cloud SQL(MySQL): `evaluation_cases`, `reference_cases`. 이 서비스가 두 테이블의 소유자다. 스키마는 수동 관리다.
+- Cloud SQL(MySQL): `evaluation_cases`, `reference_cases`. 이 서비스가 두 테이블의 소유자다. 스키마는 수동 관리다. 참고 사례의 원본이 저장된다.
 - Qdrant Cloud: 참고 사례 벡터 색인·검색. 컬렉션 이름과 접속 정보는 설정으로 받는다. 색인은 MySQL에서 재생성 가능하다.
 - Gemini API: 임베딩(`gemini-embedding-001`, 768차원)과 판정(`gemini-3.5-flash-lite`). 제목과 사람 사유가 외부로 전송된다(`docs/security.md`).
 - GCS: CSV 참고 사례 파일 읽기. `app.csv.bucket`이 비어 있으면 클래스패스 파일을 읽는다. 인증은 기본 자격 증명을 쓴다.

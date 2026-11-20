@@ -3,8 +3,10 @@
 아래는 현재 코드에서 일관되게 지켜지는 규칙이다. 새 코드도 같은 방식을 따른다.
 
 ## 코드 규칙
-- 도메인 모델은 정적 팩토리(`create`/`createPending`/`reconstitute`)로만 만들고, 상태는 setter가 아니라 의도가 드러나는 메서드(`handleFailure`, `applyAiEvaluation` 등)로만 바꾼다. 도메인에 JPA·Jackson 애노테이션을 달지 않는다.
-- JPA 엔티티는 `Persistable`로 삽입/갱신을 직접 정한다. 도메인과 엔티티 변환은 `*Mapper`에서만 한다. 삽입은 `save`, 갱신은 `update` 포트 메서드를 쓴다.
+- 도메인 모델은 정적 팩토리(`create`/`createPending`/`reconstitute`)로만 만들고, 상태는 setter가 아니라 의도가 드러나는 
+메서드(`handleFailure`, `applyAiEvaluation` 등)로만 바꾼다. 도메인에 JPA·Jackson 애노테이션을 달지 않는다.
+- JPA 엔티티는 `Persistable`로 삽입/갱신을 직접 정한다. 도메인과 엔티티 변환은 `*Mapper`에서만 한다. 
+삽입은 `save`, 갱신은 `update` 포트 메서드를 쓴다.
 - 이름: 유스케이스 `*UseCase`, 포트 `Command*Port`/`Query*Port`, 구현 `*Adapter`/`*JpaAdapter`. 의존성은 생성자 주입이다.
 - 엔티티를 바꾸면 필요한 DDL을 보고에 적는다(스키마는 수동 관리).
 
@@ -29,12 +31,10 @@
 빌드·테스트 명령의 실제 종료 결과를 보고해야 완료다. 실행하지 못했으면 이유와 함께 그렇게 보고하고, 통과했을 것이라고 추정하지 않는다. 가정한 것은 보고에 적는다.
 
 ## 코드를 바꿀 때 같이 갱신할 문서
-| 바꾼 것 | 문서 |
-|---|---|
-| 계층·의존 방향 | `docs/architecture.md` |
-| 동작 규칙(상태, 승격, DLQ 등) | `docs/business-rules.md` |
-| 필터, 비밀 값, 외부 전송 | `docs/security.md` |
-| 이벤트·프롬프트·CSV·DB 형식 | `docs/contracts.md` |
-| 설정, 배포 | `docs/operations.md` |
-| 새로 알게 된 함정·한계 | `docs/engineering-notes.md` |
-| 진행 상황, 이슈, 확정된 결정 | `docs/tracking/` |
+- 계층·의존 방향: `docs/architecture.md`
+- 동작 규칙(상태, 승격, DLQ 등): `docs/business-rules.md`
+- 필터, 비밀 값, 외부 전송: `docs/security.md`
+- 이벤트·프롬프트·CSV·DB 형식: `docs/contracts.md`
+- 설정, 배포: `docs/operations.md`
+- 새로 알게 된 함정·한계: `docs/engineering-notes.md`
+- 진행 상황, 이슈, 확정된 결정: `docs/tracking/`

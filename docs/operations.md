@@ -7,13 +7,16 @@
 - 에이전트는 Codex 샌드박스(`src-only` 프로파일)에서 위 명령을 직접 실행한다. 
 - 쓰기는 `src`, `docs`, `build`, `.gradle`, `~/.gradle`에만, 네트워크는 `services.gradle.org`, `plugins.gradle.org`, `repo.maven.apache.org`에만 열려 있다. 
 - 다른 도메인에서 받아야 하는 의존성이나 Docker가 필요한 테스트는 샌드박스에서 실패한다. 이때는 실패 원인을 보고하고 사용자가 실행한다.
+- 테스트에서 외부 서비스(Gemini, Qdrant, Kafka, Cloud SQL, GCS) 실서버를 호출하지 않는다. 가짜나 로컬 대체물로 바꿔서 테스트한다. 테스트와 설정 예시에 실제 키·시크릿을 넣지 않는다.
+- `build.gradle`, `settings.gradle`, `gradlew`, `gradle/`은 샌드박스에서 읽기 전용이다. 의존성이나 빌드 설정 변경이 필요하면 수정하지 말고 제안만 한다.
 
 ## 설정
 - 설정 키(`app.kafka.*`, `app.csv.*`, `gemini.*`, `qdrant.*`, `evaluation.secret`)는 코드의 `@Value`에서 확인한다.
-- 스키마는 `ddl-auto=none`이다. 개발자가 Cloud SQL에 수동으로 만들고 바꾼다. 에이전트는 DDL을 실행하지 않는다.
+- 스키마는 `ddl-auto=none`이다. 개발자가 Cloud SQL에 수동으로 만들고 바꾼다. 에이전트는 DDL을 실행하지 않는다. 스키마 변경이 필요한 코드를 바꾸면 필요한 DDL을 작업 보고에 적고, 적용은 하지 않는다.
 
 ## 배포
 - GitHub Actions의 `deploy.yml`이 Cloud Run으로 배포하고 GitHub Secrets 값을 주입한다.
+- 배포 설정(GitHub Actions `deploy.yml`)과 운영 인프라(Cloud Run, Cloud SQL, Qdrant, Kafka 토픽). 사용자가 직접 관리한다.
 
 ## 관리자 API 사용 순서
 모두 `POST /api/admin/rag/...`이고 `X-Evaluation-Secret` 헤더가 필요하다.
