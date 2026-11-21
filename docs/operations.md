@@ -13,6 +13,8 @@
 - 산출물: `bootJar` → `build/libs/app.jar`
 - 빌드: `./gradlew build`, 테스트: `./gradlew test, 태그별은 ./gradlew test -Dtags=unit`
 - 중간에 실패하면 같은 엔드포인트를 다시 호출한다(`docs/tracking/decisions/0001-*` 결정).
+- 초기 적재는 여러 번 실행해도 되는 작업이다. 같은 ID는 CSV 값으로 덮어쓰고, CSV에서 빠진 행은 지우지 않는다. 부분 실패하면 같은 엔드포인트를 다시 호출한다.
+- 실제 인프라가 필요한 통합 테스트는 통합 태그로 분리한다. 에이전트 샌드박스는 Docker를 열어 두지 않았으므로 컨테이너가 필요한 테스트는 사용자가 실행한다.
 
 
 ### 설정

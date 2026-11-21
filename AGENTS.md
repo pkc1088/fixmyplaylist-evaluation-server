@@ -43,7 +43,8 @@ project-root/
 
 ### 절대 규칙
 
-- git 이력을 바꾸는 명령(commit, push, reset, checkout, amend 등)을 실행하지 않는다. 변경은 파일로만 남긴다.
+- Git 저장소 상태나 이력을 변경하는 명령(add, commit, push, reset, checkout, switch, amend, merge, rebase, cherry-pick, restore, clean 등)을 실행하지 않는다. 변경은 파일로만 남긴다.
 - 사용자가 지정한 Git Worktree 안에서만 작업한다. 반영 여부는 사용자가 리뷰 후 결정한다. 지시 범위 밖의 파일은 수정하지 않는다.
+- 비밀 값이나 자격 증명은 코드, 문서, 로그, 작업 보고에 기록하지 않는다.
 - 질문은 되돌리기 어렵거나 설계/범위가 바뀌는 모호함에만 한다. 사소한 것은 합리적으로 가정하고 진행한 뒤 가정을 보고한다.
-- 코드를 바꾸면 필요시 docs와 함께 docs/tracking/status.md를 갱신하고, 해결하지 못한 구조적 문제만 docs/tracking/findings.md에 기록한다.
+- 코드를 변경하면 같은 작업에서 관련 `docs/`와 `docs/tracking/`을 갱신한다. 세부 검증 및 기록 기준은 `docs/standards.md`를 따른다.

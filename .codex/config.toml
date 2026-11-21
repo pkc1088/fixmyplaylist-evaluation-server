@@ -1,10 +1,10 @@
-default_permissions = "src-only"
+default_permissions = "worktree-safe"
 
-[permissions.src-only]
-description = "Allow source editing and build configuration reads."
+[permissions.worktree-safe]
+description = "Allow source and documentation editing within the worktree."
 extends = ":read-only"
 
-[permissions.src-only.filesystem]
+[permissions.worktree-safe.filesystem]
 ":root" = "deny"
 ":minimal" = "read"
 "/tmp" = "write"
@@ -12,7 +12,7 @@ extends = ":read-only"
 "/home/pyeon/.gradle" = "write"
 "/usr/lib/jvm/java-17-openjdk-amd64" = "read"
 
-[permissions.src-only.filesystem.":workspace_roots"]
+[permissions.worktree-safe.filesystem.":workspace_roots"]
 "src" = "write"
 "docs" = "write"
 "build" = "write"
@@ -27,31 +27,10 @@ extends = ":read-only"
 [features]
 network_proxy = true
 
-[permissions.src-only.network]
+[permissions.worktree-safe.network]
 enabled = true
 
-[permissions.src-only.network.domains]
+[permissions.worktree-safe.network.domains]
 "services.gradle.org" = "allow"
 "plugins.gradle.org" = "allow"
 "repo.maven.apache.org" = "allow"
-
-#default_permissions = "src-only"
-#
-#[permissions.src-only]
-#description = "Allow source editing and build configuration reads."
-#extends = ":read-only"
-#
-#[permissions.src-only.filesystem]
-#":root" = "deny"
-#":minimal" = "read"
-#"/home/pyeon/.codex/packages/app-server-daemon" = "read"
-#
-#[permissions.src-only.filesystem.":workspace_roots"]
-#"src" = "write"
-#"docs" = "write"
-#"README.md" = "read"
-#"AGENTS.md" = "read"
-#"build.gradle" = "read"
-#"settings.gradle" = "read"
-#"gradlew" = "read"
-#"gradle" = "read"

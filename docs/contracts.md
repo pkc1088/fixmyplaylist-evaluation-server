@@ -16,12 +16,13 @@
 - JSON 객체 `{ label: SUCCESS | FAIL, confidence: <실수> }`. 둘 다 필수이고, 프롬프트에서 confidence를 0.0~1.0으로 요청한다. 프롬프트에는 유사도 점수를 넣지 않는다.
 - Gemini 프롬프트와 모델·온도 설정(`GeminiEvaluatorAdapter`, `GeminiConfig`)은 건드리지 않는다.
 - Gemini 임베딩(`gemini-embedding-001`, 768차원)과 판정(`gemini-3.5-flash-lite`).
+- 모든 임베딩은 같은 모델·차원·텍스트 형식으로 만든다. 하나라도 바꾸면 전체 재색인이 필요하다.
 
 ## CSV 참고 사례 파일
-UTF-8, 첫 줄은 헤더. 열 순서는 `id, source 제목, target 제목, 라벨(SUCCESS/FAIL), 사유`다. 열이 모자라거나 라벨이 틀리면 적재가 예외로 실패한다.
+- UTF-8, 첫 줄은 헤더. 열 순서는 `id, source 제목, target 제목, 라벨(SUCCESS/FAIL), 사유`다. 열이 모자라거나 라벨이 틀리면 적재가 예외로 실패한다.
 
 ## DB 스키마 제약
-스키마는 수동 관리이므로 실제 DB가 최종 기준이다.
+- 스키마는 수동 관리이므로 실제 DB가 최종 기준이다.
 - `evaluation_cases`의 기본 키는 `eventId`다. AI 판정·사람 검수 컬럼은 NULL 허용이고, 상태와 재시도 횟수는 NOT NULL이다. 
 - `retrievedInfo`는 `{referenceCaseId, similarityScore}` 목록(JSON)이다.
 - `reference_cases`는 사람 라벨과 사유가 NOT NULL이다.

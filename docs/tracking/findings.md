@@ -1,1 +1,3 @@
 작업 중 발견한 재현 가능한 결함은 즉시 수정하며, 외부 의존성이나 범위 외 사유로 보류할 때만 재현 조건, 영향 범위, 보류 사유를 docs/tracking/findings.md에 기록한다.
+
+- 승격 시 ReferenceCase ID를 EvaluationCase ID와 같게 쓸지는 확인 필요: 승격 시 ID 규칙.
