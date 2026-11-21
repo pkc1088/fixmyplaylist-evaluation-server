@@ -15,6 +15,7 @@
 ## Gemini 판정 응답
 - JSON 객체 `{ label: SUCCESS | FAIL, confidence: <실수> }`. 둘 다 필수이고, 프롬프트에서 confidence를 0.0~1.0으로 요청한다. 프롬프트에는 유사도 점수를 넣지 않는다.
 - Gemini 프롬프트와 모델·온도 설정(`GeminiEvaluatorAdapter`, `GeminiConfig`)은 건드리지 않는다.
+- Gemini 임베딩(`gemini-embedding-001`, 768차원)과 판정(`gemini-3.5-flash-lite`).
 
 ## CSV 참고 사례 파일
 UTF-8, 첫 줄은 헤더. 열 순서는 `id, source 제목, target 제목, 라벨(SUCCESS/FAIL), 사유`다. 열이 모자라거나 라벨이 틀리면 적재가 예외로 실패한다.

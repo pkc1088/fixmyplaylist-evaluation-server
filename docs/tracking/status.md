@@ -4,7 +4,7 @@
 
 ## 남은 것
 - 승격 기능은 아직 미구현이며 구현할 때는 Outbox와 재처리 구조로 만든다(`docs/tracking/decisions/0002-*.md`). `ReferenceCasePromotionService`는 Outbox가 없는 초안이므로 그대로 호출 경로에 연결하지 않는다.
-
+- 승격 기능은 미구현이다. `QueryEvaluationCasePort.loadPendingReview()`(검수 대기 조회, confidence 낮은 순)도 같은 이유로 호출하는 곳이 없다.
 
 
 ## 블로킹

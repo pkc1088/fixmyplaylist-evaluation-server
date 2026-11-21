@@ -1,30 +1,42 @@
-# 운영
+### 운영
 
-세부 운영 값(배포 명령, 인프라 설정, 환경 변수 이름)은 개발자가 직접 관리한다.
+- 세부 운영 값(배포 명령, 인프라 설정, 환경 변수 이름)은 개발자가 직접 관리한다.
 
-## 빌드·테스트
+### 빌드·테스트
+
 - `./gradlew build`, `./gradlew test`(태그별은 `-Dtags=<태그>`).
 - 에이전트는 Codex 샌드박스(`src-only` 프로파일)에서 위 명령을 직접 실행한다. 
 - 쓰기는 `src`, `docs`, `build`, `.gradle`, `~/.gradle`에만, 네트워크는 `services.gradle.org`, `plugins.gradle.org`, `repo.maven.apache.org`에만 열려 있다. 
 - 다른 도메인에서 받아야 하는 의존성이나 Docker가 필요한 테스트는 샌드박스에서 실패한다. 이때는 실패 원인을 보고하고 사용자가 실행한다.
 - 테스트에서 외부 서비스(Gemini, Qdrant, Kafka, Cloud SQL, GCS) 실서버를 호출하지 않는다. 가짜나 로컬 대체물로 바꿔서 테스트한다. 테스트와 설정 예시에 실제 키·시크릿을 넣지 않는다.
 - `build.gradle`, `settings.gradle`, `gradlew`, `gradle/`은 샌드박스에서 읽기 전용이다. 의존성이나 빌드 설정 변경이 필요하면 수정하지 말고 제안만 한다.
+- 산출물: `bootJar` → `build/libs/app.jar`
+- 빌드: `./gradlew build`, 테스트: `./gradlew test, 태그별은 ./gradlew test -Dtags=unit`
+- 중간에 실패하면 같은 엔드포인트를 다시 호출한다(`docs/tracking/decisions/0001-*` 결정).
 
-## 설정
+
+### 설정
+
 - 설정 키(`app.kafka.*`, `app.csv.*`, `gemini.*`, `qdrant.*`, `evaluation.secret`)는 코드의 `@Value`에서 확인한다.
 - 스키마는 `ddl-auto=none`이다. 개발자가 Cloud SQL에 수동으로 만들고 바꾼다. 에이전트는 DDL을 실행하지 않는다. 스키마 변경이 필요한 코드를 바꾸면 필요한 DDL을 작업 보고에 적고, 적용은 하지 않는다.
 
-## 배포
+
+### 배포
+
 - GitHub Actions의 `deploy.yml`이 Cloud Run으로 배포하고 GitHub Secrets 값을 주입한다.
 - 배포 설정(GitHub Actions `deploy.yml`)과 운영 인프라(Cloud Run, Cloud SQL, Qdrant, Kafka 토픽). 사용자가 직접 관리한다.
 
-## 관리자 API 사용 순서
+
+### 관리자 API 사용 순서
+
 모두 `POST /api/admin/rag/...`이고 `X-Evaluation-Secret` 헤더가 필요하다.
 1. 처음 구축: `setup/initial`을 먼저 한다.
 2. 임베딩 모델·차원을 바꾼 뒤, 또는 Qdrant가 MySQL과 어긋났을 때: `setup/reindex`.
 3. 평가: `evaluate/pending`이 신규 수신과 밀린 건 평가를 한 번에 한다.
 
-## 장애 시 확인 순서
+
+### 장애 시 확인 순서
+
 1. **403**: 시크릿 헤더와 경로(`/api/admin/rag/` 아래인지)를 본다.
 2. **초기 적재 중 실패**: 같은 호출을 다시 한다. Qdrant만 비었다고 의심되면 `setup/reindex`. CSV 오류는 응답 본문과 로그를 본다(오류여도 HTTP 200일 수 있다. F-001).
 3. **평가가 안 됨**: 로그의 `Poll returned empty`, `Fatal Error During Manual Consumption`으로 Kafka 쪽(토픽 설정, 연결·인증)을 먼저 본다.

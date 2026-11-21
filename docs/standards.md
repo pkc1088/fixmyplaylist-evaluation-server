@@ -9,6 +9,7 @@
 삽입은 `save`, 갱신은 `update` 포트 메서드를 쓴다.
 - 이름: 유스케이스 `*UseCase`, 포트 `Command*Port`/`Query*Port`, 구현 `*Adapter`/`*JpaAdapter`. 의존성은 생성자 주입이다.
 - 엔티티를 바꾸면 필요한 DDL을 보고에 적는다(스키마는 수동 관리).
+- 생성자 인자가 설정 값인 어댑터(`CsvReaderAdapter`, `KafkaMessagePullAdapter`, `KafkaDlqAdapter`)는 `@Component`가 아니라 `infrastructure.config`의 `@Bean`으로 만든다.
 
 ## 트랜잭션
 - `saveToInboxIdempotent`는 트랜잭션 없이 호출한다. 중복 키 예외를 잡아 무시하는 방식이라, 바깥 트랜잭션이 있으면 깨진다.
