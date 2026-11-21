@@ -1,0 +1,89 @@
+server:
+  port: 8083
+  address: 0.0.0.0
+  forward-headers-strategy: framework
+  shutdown: graceful
+
+
+evaluation:
+  secret: dummy
+
+
+app:
+  kafka:
+    topic:
+      recovery-evaluation: dev.recovery.evaluation.event
+      evaluation-dlq: dev.evaluation.dlq.event
+  csv:
+    bucket: ""
+    path: "dummy"
+
+
+gemini:
+  api-key: dummy
+
+
+qdrant:
+  host: dummy
+  port: 6334
+  api-key: dummy
+  use-tls: true
+  collection-name: dev.reference.cases
+
+
+spring:
+  application:
+    name: evaluationService
+
+  lifecycle:
+    timeout-per-shutdown-phase: 10s
+
+  kafka:
+    bootstrap-servers: dummy
+    properties:
+      security.protocol: PLAINTEXT # for test
+      sasl.mechanism: PLAIN
+      sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="dummy" password="dummy";
+    consumer:
+      group-id: dev-evaluation-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/dummy_db
+    username: dummy
+    password: dummy
+    hikari:
+      maximum-pool-size: 40
+      minimum-idle: 5
+      idle-timeout: 30000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          batch_size: 1000
+        order_updates: true
+        order_inserts: true
+    open-in-view: false
+
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: DEBUG
+        type:
+          descriptor:
+            sql:
+              BasicBinder: TRACE

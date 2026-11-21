@@ -3,6 +3,7 @@
 - `build.gradle`, `settings.gradle`, `gradlew`, `gradle/` 하위 파일은 직접 수정하지 않는다. 의존성 추가나 빌드 설정 변경이 필요하면 수정안만 제안한다.
 - 외부 라이브러리 버전 변경이나 모듈 간 버전 정렬은 명시적 지시 없이 수행하지 않는다.
 
+
 ### 모듈 경계 및 임포트 규칙
 
 - `adapter.in`은 `port.in`만 참조하며 `application.service`나 `adapter.out`을 직접 참조하지 않는다.
@@ -35,20 +36,21 @@
 
 ### 환경 설정 및 스키마 규칙
 
-- `application.yaml` 및 실제 환경 설정 파일은 `.gitignore` 대상이며 워크트리에 추가하거나 커밋 대상으로 생성하지 않는다.
+- `application.yml` 및 실제 환경 설정 파일은 `.gitignore` 대상이며 워크트리에 추가하거나 커밋 대상으로 생성하지 않는다.
 - `evaluation.secret`을 포함한 인증 및 외부 연동 비밀 설정에 기본값을 두지 않는다.
-- JPA 엔티티의 테이블이나 컬럼 구조를 변경할 때 DDL을 직접 실행하지 않으며, 반영에 필요한 DDL을 작업 보고에 포함한다.
-
+- JPA 엔티티의 테이블이나 컬럼 구조를 변경하면 `src/test/resources/schema.sql`도 함께 갱신한다. Cloud SQL에 DDL을 직접 실행하지 않으며, 운영 반영에 필요한 DDL은 작업 보고에 포함한다.
 
 ### 테스트 규칙
 
-- 워크트리에 `application.yaml`이 존재하지 않으므로 자동 검증 테스트는 스프링 부트 컨텍스트를 기동하지 않는 순수 단위 테스트로 작성한다.
+- 워크트리에 `application.yml`이 존재하지 않으므로 자동 검증 테스트는 스프링 부트 컨텍스트를 기동하지 않는 순수 단위 테스트로 작성한다.
 - `@SpringBootTest`처럼 애플리케이션 컨텍스트 기동이 필요한 테스트는 자동 검증 대상에 포함하지 않는다.
 - 테스트 코드에서 Gemini, Qdrant, Kafka, Cloud SQL, GCS 실서버를 호출하지 않는다.
 - `domain` 단위 테스트는 Mockito 없이 순수 자바 객체로 작성한다.
 - `application.service` 단위 테스트는 `port.out` 인터페이스를 Mockito나 가짜 구현체로 대체한다.
 - Gemini 연동 어댑터 테스트는 고정 JSON 응답으로 대체해 응답 파싱과 실패 분기 처리만 검증한다.
 - Qdrant 연동 어댑터 테스트는 `EmbeddingStore`를 가짜 구현체나 Mockito로 대체한다.
+- 스프링 컨텍스트 없이 실행하는 단위 테스트는 반드시 `@Tag("unit")`을 붙인다.
+- 스프링 컨텍스트나 외부 컨테이너가 필요한 테스트에는 반드시 `@Tag("integration")`을 붙인다.
 
 
 ### 검증 및 문서 갱신 게이트
