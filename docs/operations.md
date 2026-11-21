@@ -1,30 +1,36 @@
-# 운영
+### 사전 요구 사항
 
-세부 운영 값(배포 명령, 인프라 설정, 환경 변수 이름)은 개발자가 직접 관리한다.
+- 단위 빌드와 단위 테스트: JDK 17만 필요하다. `application.yml`, Docker, 외부 인프라 없이 실행한다.
+- 통합 테스트와 로컬 기동: JDK 17, 로컬 `application.yml`, Docker 또는 실제 연동 인프라가 필요하다.
+- 운영 인프라 관리 경계: Cloud Run, Cloud SQL, Qdrant Cloud, Confluent Cloud Kafka 토픽, GitHub Actions 배포 설정은 운영자가 직접 관리한다.
 
-## 빌드·테스트
-- `./gradlew build`, `./gradlew test`(태그별은 `-Dtags=<태그>`).
-- 에이전트는 Codex 샌드박스(`src-only` 프로파일)에서 위 명령을 직접 실행한다. 
-- 쓰기는 `src`, `docs`, `build`, `.gradle`, `~/.gradle`에만, 네트워크는 `services.gradle.org`, `plugins.gradle.org`, `repo.maven.apache.org`에만 열려 있다. 
-- 다른 도메인에서 받아야 하는 의존성이나 Docker가 필요한 테스트는 샌드박스에서 실패한다. 이때는 실패 원인을 보고하고 사용자가 실행한다.
 
-## 설정
-- 설정 키(`app.kafka.*`, `app.csv.*`, `gemini.*`, `qdrant.*`, `evaluation.secret`)는 코드의 `@Value`에서 확인한다.
-- 스키마는 `ddl-auto=none`이다. 개발자가 Cloud SQL에 수동으로 만들고 바꾼다. 에이전트는 DDL을 실행하지 않는다.
+### 빌드 및 검증 명령
 
-## 배포
-- GitHub Actions의 `deploy.yml`이 Cloud Run으로 배포하고 GitHub Secrets 값을 주입한다.
+- 기본 검증 명령: `./gradlew test -Dtags=unit`
+- 단위 테스트 포함 전체 빌드: `./gradlew build -Dtags=unit`
+- 실행 JAR 패키징: `./gradlew bootJar` 실행 시 `build/libs/app.jar`가 생성된다.
+- 컨테이너 통합 테스트: 로컬 `application.yml`과 Docker 컨테이너 인프라가 준비된 환경에서만 `./gradlew test -Dtags=integration`을 실행한다.
+- 실행 제약: `application.yml`이나 Docker가 없는 환경에서는 `-Dtags=integration`과 태그를 생략한 `./gradlew test`, `./gradlew build`를 실행하지 않는다. `build.gradle`은 `tags` 프로퍼티가 없으면 통합 테스트까지 모두 실행한다.
 
-## 관리자 API 사용 순서
-모두 `POST /api/admin/rag/...`이고 `X-Evaluation-Secret` 헤더가 필요하다.
-1. 처음 구축: `setup/initial`을 먼저 한다.
-2. 임베딩 모델·차원을 바꾼 뒤, 또는 Qdrant가 MySQL과 어긋났을 때: `setup/reindex`.
-3. 평가: `evaluate/pending`이 신규 수신과 밀린 건 평가를 한 번에 한다.
 
-## 장애 시 확인 순서
-1. **403**: 시크릿 헤더와 경로(`/api/admin/rag/` 아래인지)를 본다.
-2. **초기 적재 중 실패**: 같은 호출을 다시 한다. Qdrant만 비었다고 의심되면 `setup/reindex`. CSV 오류는 응답 본문과 로그를 본다(오류여도 HTTP 200일 수 있다. F-001).
-3. **평가가 안 됨**: 로그의 `Poll returned empty`, `Fatal Error During Manual Consumption`으로 Kafka 쪽(토픽 설정, 연결·인증)을 먼저 본다.
-4. **계속 `FAILED`**: Gemini 응답·타임아웃, Qdrant 연결, 임베딩 호출 순으로 본다. `DEAD`는 사람이 검수한다.
-5. **DLQ가 쌓임**: `Move To DLQ` 로그로 원인을 보고, 해결한 뒤 필요하면 수동 재발행한다. `CRITICAL: Fail to send DLQ message`가 보이면 원문이 그 로그에 있으니 DLQ 토픽 연결을 먼저 복구한다.
-6. **근거 없이 판정됨**: Qdrant에 참고 사례가 색인되어 있는지 보고, 비었으면 `setup/reindex`.
+### 환경 설정
+
+- 로컬 설정 파일인 `application.yml`은 `.gitignore` 대상이며 저장소에 포함하지 않는다. 세부 키 이름은 코드의 `@Value`와 설정 바인딩을 기준으로 확인한다.
+- `evaluation.secret`: 관리자 API 인증용 정적 시크릿이다. 필수이며 기본값이 없어 누락 시 애플리케이션 기동이 실패한다.
+- `spring.datasource.*`: Cloud SQL MySQL 접속 URL과 계정 정보이다.
+- `spring.jpa.hibernate.ddl-auto`: 운영 환경은 반드시 `none`으로 유지하며 스키마 변경은 운영자가 수동 DDL로 적용한다.
+- `app.kafka.*`: Confluent Cloud Kafka 접속 정보, 입력 토픽, DLQ 토픽, 수동 풀링 컨슈머 설정이다.
+- `gemini.*`: Gemini API 키, 임베딩과 판정 모델, 온도 등 LLM 호출 설정이다.
+- `qdrant.*`: Qdrant Cloud 접속 정보, API 키, 컬렉션 이름이다.
+- `app.csv.*`: 초기 적재용 참고 사례 CSV 위치 설정이다. `app.csv.bucket`을 지정하면 GCS에서 읽고, 비워 두면 클래스패스 CSV를 읽는다.
+- GCS 인증: 별도 키 설정을 두지 않으며 런타임 기본 자격 증명을 사용한다.
+
+
+### 배포 및 데이터 초기화 순서
+
+- 배포 경로: GitHub Actions의 `.github/workflows/deploy.yml`이 Cloud Run에 배포하고 GitHub Secrets를 런타임 환경 변수로 주입한다.
+- 초기 구축 순서: Cloud SQL에 `evaluation_cases`와 `reference_cases` 테이블을 먼저 생성한 뒤 Cloud Run에 배포하고, `setup/initial`로 참고 사례를 적재한 다음 `evaluate/pending`을 실행한다. `setup/initial` 전에 평가를 실행하면 Qdrant 색인이 비어 있어 참고 사례 근거 없이 판정된다.
+- 스키마 변경 반영 순서: 운영 Cloud SQL에 수동 DDL을 먼저 적용한 뒤 애플리케이션을 배포한다. 배포를 먼저 하면 신규 테이블이나 컬럼 참조 시 런타임 SQL 오류가 발생한다.
+- 임베딩 변경 및 색인 복구 순서: 임베딩 모델, 벡터 차원, 입력 텍스트 형식을 변경해 배포했거나 Qdrant 색인이 MySQL 원본과 어긋났을 때는 `setup/reindex`를 실행해 Qdrant 포인트 수와 Cloud SQL `reference_cases` 행 수를 맞춘다.
+- 초기 적재 부분 실패 복구: `setup/initial` 실행 중 실패하면 동일 엔드포인트를 재호출한다.

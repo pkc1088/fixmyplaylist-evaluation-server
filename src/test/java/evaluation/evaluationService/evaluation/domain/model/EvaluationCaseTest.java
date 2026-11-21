@@ -1,10 +1,12 @@
 package evaluation.evaluationService.evaluation.domain.model;
 
 import evaluation.evaluationService.evaluation.domain.model.enums.EvaluationStatus;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Tag("unit")
 class EvaluationCaseTest {
 
     @Test
