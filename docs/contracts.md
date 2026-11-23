@@ -1,9 +1,10 @@
 ### HTTP 관리자 API 공통 규약
 
-- 모든 엔드포인트는 `POST /api/admin/rag/` 하위 경로를 사용한다.
+- 모든 엔드포인트는 `/api/admin/rag/` 하위 경로를 사용한다.
 - 인증 헤더: 모든 요청에 `X-Evaluation-Secret` 헤더가 필수이다.
 - 인증 오류: 헤더가 누락되었거나 설정값과 일치하지 않으면 HTTP 403을 반환한다. 실제 에러 응답 본문 형식은 필터 구현 기준으로 기입한다.
 - 서버 오류: 처리 중 미처리 예외가 발생하면 HTTP 500을 반환한다.
+- 브라우저 검수 화면: `/admin-review.html`. API 요청에 `X-Evaluation-Secret` 헤더로 전달한다.
 
 
 ### HTTP 관리자 API 목록
@@ -12,14 +13,29 @@
     - 입력: 요청 본문 없음.
     - 출력: HTTP 200과 초기 적재 처리 결과 본문을 반환한다. 실제 응답 필드 구조는 컨트롤러 기준으로 기입한다.
     - 오류: CSV 형식 오류나 부분 실패가 발생해도 HTTP 200으로 응답할 수 있으므로 응답 본문으로 실패 여부를 확인한다.
+
 - `POST /api/admin/rag/setup/reindex`
     - 입력: 요청 본문 없음.
     - 출력: HTTP 200과 재색인 처리 결과 본문을 반환한다. 실제 응답 필드 구조는 컨트롤러 기준으로 기입한다.
     - 오류: MySQL 조회나 Qdrant·Gemini 연동 실패 시 오류 응답을 반환한다.
+
 - `POST /api/admin/rag/evaluate/pending`
     - 입력: 요청 본문 없음.
     - 출력: HTTP 200과 평가 실행 결과 본문을 반환한다. 실제 응답 필드 구조는 컨트롤러 기준으로 기입한다.
     - 오류: Kafka 수동 풀링 치명 오류 등 실행 불가 상황에서 오류 응답을 반환한다. 개별 이벤트 검증 실패와 단건 평가 실패는 HTTP 요청을 실패시키지 않고 DLQ 발행이나 DB 상태 기록으로 처리한다.
+
+- `GET /api/admin/rag/review/pending`
+    - 입력: 요청 본문 없음. `X-Evaluation-Secret` 필수.
+    - 출력: `AI_EVALUATED` 상태 사례의 `evaluationCaseId`, 제목, AI 라벨/신뢰도, 평가 시각 배열.
+
+- `POST /api/admin/rag/promote/{evaluationCaseId}`
+    - 입력 JSON: `humanLabel` (`SUCCESS` 또는 `FAIL`), `humanReason` (공백 불가, 최대 4000자).
+    - 출력: `indexed`, `failed` 수. 색인 실패는 HTTP 성공 응답과 함께 `failed`로 나타나며 Outbox 재시도 대상에 남는다.
+    - 오류: 대상 없음은 404, 검수 가능한 상태가 아니거나 내용이 다른 중복 요청이면 409.
+
+- `POST /api/admin/rag/promotion/indexing/retry`
+    - 입력: 요청 본문 없음. `PENDING`/`FAILED` Outbox 색인 작업 재시도.
+    - 출력: `indexed`, `failed` 수.
 
 
 ### Kafka 이벤트 계약
@@ -38,6 +54,7 @@
     - 입력: `Target:` 줄과 `Source:` 줄로 구성된 고정 텍스트 형식이다. 색인과 검색 모두 동일한 형식을 사용한다.
     - 출력: 768차원 실수 벡터.
     - 오류: API 오류나 차원 불일치 시 해당 건의 평가 또는 적재 실패로 처리한다.
+
 - 판정 호출
     - 모델: `gemini-3.5-flash-lite`
     - 입력: 평가 대상 제목과 검색된 참고 사례의 제목 및 사람 검수 사유. 유사도 점수는 프롬프트에 넣지 않는다.
@@ -66,5 +83,6 @@
 - `evaluation_cases`: 기본 키는 `eventId`이다. 상태와 재시도 횟수는 `NOT NULL`이며 AI 판정과 사람 검수 컬럼은 `NULL`을 허용한다.
 - `retrievedInfo` 컬럼: `referenceCaseId`와 `similarityScore`를 필드로 갖는 JSON 배열로 저장한다.
 - `reference_cases`: 사람 라벨과 사유 컬럼은 `NOT NULL`이다.
+- `promotion_outbox`: `reference_case_id` 기본 키, `status` (`PENDING`, `FAILED`, `INDEXED`), 시도 횟수와 마지막 실패 유형을 저장한다. 오류 메시지 원문은 저장하지 않는다.
 - enum 직렬화: 문자열 이름 그대로 저장한다. 상태 값은 `PENDING`, `AI_EVALUATED`, `HUMAN_REVIEWED`, `FAILED`, `DEAD`, 라벨 값은 `SUCCESS`, `FAIL`을 사용한다.
 - 시각 컬럼: 타임존 오프셋 없는 `LocalDateTime` 형식으로 저장한다.

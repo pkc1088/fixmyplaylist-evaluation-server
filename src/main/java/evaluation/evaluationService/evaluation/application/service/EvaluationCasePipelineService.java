@@ -1,6 +1,7 @@
 package evaluation.evaluationService.evaluation.application.service;
 
 import evaluation.evaluationService.evaluation.application.port.in.EvaluationCaseUseCase;
+import evaluation.evaluationService.evaluation.application.port.in.dto.ReviewCaseResponse;
 import evaluation.evaluationService.evaluation.application.port.out.*;
 import evaluation.evaluationService.evaluation.application.port.out.dto.RecoveryCompletedEvent;
 import evaluation.evaluationService.evaluation.application.port.out.dto.VectorSearchResult;
@@ -35,6 +36,21 @@ public class EvaluationCasePipelineService implements EvaluationCaseUseCase {
     private final DlqPort dlqPort;
 
 
+    @Override
+    public List<ReviewCaseResponse> loadPendingReviewCases() {
+        return queryEvaluationCasePort.loadPendingReview().stream()
+                .map(evaluationCase -> new ReviewCaseResponse(
+                        evaluationCase.getEvaluationCaseId(),
+                        evaluationCase.getTargetTitle(),
+                        evaluationCase.getSourceTitle(),
+                        evaluationCase.getAiLabel(),
+                        evaluationCase.getAiConfidence(),
+                        evaluationCase.getEvaluatedAt()
+                ))
+                .toList();
+    }
+
+    @Override
     public void evaluatePendingCases() {
 
         // Kafka 수동 폴링 — Inbox 적재까지만

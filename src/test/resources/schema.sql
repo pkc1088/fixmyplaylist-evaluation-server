@@ -28,3 +28,13 @@ CREATE TABLE IF NOT EXISTS evaluation_cases (
     reviewed_at DATETIME(6) DEFAULT NULL,
     retrieved_info JSON DEFAULT NULL
 );
+
+CREATE TABLE IF NOT EXISTS promotion_outbox (
+    reference_case_id VARCHAR(100) NOT NULL PRIMARY KEY,
+    status VARCHAR(20) NOT NULL,
+    attempts INT NOT NULL DEFAULT 0,
+    last_failure_type VARCHAR(100) DEFAULT NULL,
+    created_at DATETIME(6) NOT NULL,
+    updated_at DATETIME(6) NOT NULL
+);
+CREATE INDEX idx_promotion_outbox_status_created ON promotion_outbox(status, created_at);

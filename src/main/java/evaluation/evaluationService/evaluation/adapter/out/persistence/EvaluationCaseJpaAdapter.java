@@ -3,6 +3,7 @@ package evaluation.evaluationService.evaluation.adapter.out.persistence;
 import evaluation.evaluationService.evaluation.application.port.out.CommandEvaluationCasePort;
 import evaluation.evaluationService.evaluation.application.port.out.QueryEvaluationCasePort;
 import evaluation.evaluationService.evaluation.domain.model.EvaluationCase;
+import evaluation.evaluationService.evaluation.domain.exception.EvaluationCaseNotFoundException;
 import evaluation.evaluationService.evaluation.domain.model.enums.EvaluationStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,8 +46,10 @@ public class EvaluationCaseJpaAdapter implements CommandEvaluationCasePort, Quer
     }
 
     @Override
-    public boolean existsById(String evaluationCaseId) {
-        return repository.existsById(evaluationCaseId);
+    public EvaluationCase loadById(String evaluationCaseId) {
+        return repository.findById(evaluationCaseId)
+                .map(mapper::toDomain)
+                .orElseThrow(() -> new EvaluationCaseNotFoundException(evaluationCaseId));
     }
 
     @Override

@@ -10,5 +10,5 @@ public interface QueryEvaluationCasePort {
 
     List<EvaluationCase> loadPendingReview();       // status = AI_EVALUATED → 휴먼 리뷰 대상
 
-    boolean existsById(String evaluationCaseId);
+    EvaluationCase loadById(String evaluationCaseId);
 }
