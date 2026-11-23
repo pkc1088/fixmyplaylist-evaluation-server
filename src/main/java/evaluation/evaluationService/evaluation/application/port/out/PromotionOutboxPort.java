@@ -4,7 +4,9 @@ import java.util.List;
 
 public interface PromotionOutboxPort {
 
-    boolean enqueue(String referenceCaseId);
+    void enqueue(String referenceCaseId);
+
+    boolean needsIndexing(String referenceCaseId);
 
     List<String> loadPendingReferenceCaseIds();
 

@@ -16,7 +16,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class PromotionPersistenceService {
+public class PromotionOutboxService {
 
     private final CommandEvaluationCasePort commandEvaluationCasePort;
     private final CommandReferenceCasePort commandReferenceCasePort;
@@ -34,13 +34,11 @@ public class PromotionPersistenceService {
             if (evaluationCase.getHumanLabel() != humanLabel || !humanReason.equals(evaluationCase.getHumanReason())) {
                 throw new IllegalStateException("EvaluationCase was already reviewed with different values");
             }
-            // 이미 검수됐고 요청의 라벨·사유가 저장된 값과 같으면, 네트워크 재요청으로 보고 Outbox 를 확인한 뒤 같은 승격 색인을 다시 시도
-            boolean needsIndexing = promotionOutboxPort.enqueue(evaluationCaseId);
-
-            return needsIndexing ? Optional.of(evaluationCaseId) : Optional.empty();
+            // 타임아웃이나 네트워크 오류로 Qdrant 색인 실패 시, 같은 카드로 버튼을 한 번 더 눌렀을 때 오류를 뱉지 않고 이어서 처리.
+            return promotionOutboxPort.needsIndexing(evaluationCaseId) ? Optional.of(evaluationCaseId) : Optional.empty();
         }
 
-        // 아직 검수되지 않은 경우에는, 이 메서드는 AI_EVALUATED 상태만 허용하므로 다른 상태의 사례는 거부.
+        // 일반적인 Promotion(AI_EVALUATED -> HUMAN_REVIEWED)
         evaluationCase.applyHumanReview(humanLabel, humanReason);
 
         ReferenceCase referenceCase = ReferenceCase.create(
@@ -53,8 +51,8 @@ public class PromotionPersistenceService {
 
         commandReferenceCasePort.save(referenceCase);
         commandEvaluationCasePort.update(evaluationCase);
-        boolean needsIndexing = promotionOutboxPort.enqueue(referenceCase.getReferenceCaseId());
+        promotionOutboxPort.enqueue(referenceCase.getReferenceCaseId());
 
-        return needsIndexing ? Optional.of(referenceCase.getReferenceCaseId()) : Optional.empty();
+        return Optional.of(referenceCase.getReferenceCaseId());
     }
 }

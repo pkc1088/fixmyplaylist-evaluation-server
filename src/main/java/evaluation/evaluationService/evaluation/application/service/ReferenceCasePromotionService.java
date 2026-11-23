@@ -18,15 +18,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReferenceCasePromotionService implements PromotionUseCase {
 
-    private final PromotionPersistenceService promotionPersistenceService;
     private final RetrieveReferenceCasePort retrieveReferenceCasePort;
+    private final PromotionOutboxService promotionOutboxService;
     private final QueryReferenceCasePort queryReferenceCasePort;
     private final PromotionOutboxPort promotionOutboxPort;
 
 
     @Override
     public IndexRetryResult promote(String evaluationCaseId, EvaluationLabel humanLabel, String humanReason) {
-        return promotionPersistenceService.reviewAndQueue(evaluationCaseId, humanLabel, humanReason)
+        return promotionOutboxService.reviewAndQueue(evaluationCaseId, humanLabel, humanReason)
                 .map(promotionCaseId -> indexPending(List.of(promotionCaseId)))
                 .orElseGet(() -> new IndexRetryResult(0, 0));
     }
@@ -48,7 +48,7 @@ public class ReferenceCasePromotionService implements PromotionUseCase {
                 retrieveReferenceCasePort.index(List.of(referenceCase));
 
             } catch (Exception e) {
-                log.error("ReferenceCase Qdrant indexing failed; referenceCaseId={}", referenceCaseId, e);
+                log.error("ReferenceCase Qdrant indexing failed: referenceCaseId={}", referenceCaseId, e);
                 markFailedSafely(referenceCaseId, e.getClass().getSimpleName());
                 failed++;
                 continue;
@@ -59,7 +59,7 @@ public class ReferenceCasePromotionService implements PromotionUseCase {
                 indexed++;
 
             } catch (Exception e) {
-                log.error("Qdrant indexing succeeded but failed to mark outbox as INDEXED; referenceCaseId={}", referenceCaseId, e);
+                log.error("Qdrant indexing succeeded but failed to mark outbox as INDEXED: referenceCaseId={}", referenceCaseId, e);
                 failed++;
             }
         }

@@ -44,6 +44,7 @@ public class RagAdminController {
         return ResponseEntity.ok("PENDING 상태 케이스 일괄 평가 완료");
     }
 
+    // 관리자 메뉴얼: AI_REVIEWED -> HUMAN_REVIEWED 로 승진
     @GetMapping("/review/pending")
     public ResponseEntity<List<ReviewCaseResponse>> loadPendingReviewCases() {
         List<ReviewCaseResponse> cases = evaluationCaseUseCase.loadPendingReviewCases();

@@ -15,13 +15,15 @@ public class PromotionOutboxJpaAdapter implements PromotionOutboxPort {
 
 
     @Override
-    public boolean enqueue(String referenceCaseId) {
+    public void enqueue(String referenceCaseId) {
+        repository.save(PromotionOutboxJpaEntity.createPending(referenceCaseId));
+    }
+
+    @Override
+    public boolean needsIndexing(String referenceCaseId) {
         return repository.findById(referenceCaseId)
-                .map(existing -> existing.getStatus() != PromotionOutboxJpaEntity.Status.INDEXED)
-                .orElseGet(() -> {
-                    repository.save(PromotionOutboxJpaEntity.createPending(referenceCaseId));
-                    return true;
-                });
+                .map(outbox -> outbox.getStatus() != PromotionOutboxJpaEntity.Status.INDEXED)
+                .orElseThrow(() -> new IllegalStateException("Promotion outbox missing; referenceCaseId=" + referenceCaseId));
     }
 
     @Override

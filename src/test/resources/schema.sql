@@ -37,4 +37,4 @@ CREATE TABLE IF NOT EXISTS promotion_outbox (
     created_at DATETIME(6) NOT NULL,
     updated_at DATETIME(6) NOT NULL
 );
-CREATE INDEX idx_promotion_outbox_status_created ON promotion_outbox(status, created_at);
+-- CREATE INDEX idx_promotion_outbox_status_created ON promotion_outbox(status, created_at);
