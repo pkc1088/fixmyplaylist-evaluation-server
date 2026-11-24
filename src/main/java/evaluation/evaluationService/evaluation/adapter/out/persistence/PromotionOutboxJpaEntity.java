@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class PromotionOutboxJpaEntity implements Persistable<String> {
 
     @Id
-    @Column(nullable = false, length = 100)
+    @Column(length = 100)
     private String referenceCaseId;
 
     @Enumerated(EnumType.STRING)
