@@ -12,12 +12,15 @@ import evaluation.evaluationService.evaluation.application.port.out.dto.VectorSe
 import evaluation.evaluationService.evaluation.domain.model.EvaluationCase;
 import evaluation.evaluationService.evaluation.domain.model.ReferenceCase;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RetrieveReferenceCaseAdapter implements RetrieveReferenceCasePort {
@@ -28,6 +31,8 @@ public class RetrieveReferenceCaseAdapter implements RetrieveReferenceCasePort {
 
     @Override
     public void index(List<ReferenceCase> cases) {
+        if (cases == null || cases.isEmpty()) return;
+
         List<TextSegment> segments = cases.stream()
                 .map(this::toEmbeddingSegment)
                 .toList();
@@ -57,9 +62,16 @@ public class RetrieveReferenceCaseAdapter implements RetrieveReferenceCasePort {
         List<EmbeddingMatch<TextSegment>> matches = embeddingStore.search(request).matches();
 
         return matches.stream()
-                .map(m -> new VectorSearchResult(
-                        m.embedded().metadata().getString("referenceCaseId"),
-                        m.score()))
+                .filter(m -> m.embedded() != null && m.embedded().metadata() != null)
+                .map(m -> {
+                    String referenceCaseId = m.embedded().metadata().getString("referenceCaseId");
+                    if (referenceCaseId == null || referenceCaseId.isBlank()) {
+                        log.warn("Missing referenceCaseId metadata in Qdrant match. pointId={}", m.embeddingId());
+                        return null;
+                    }
+                    return new VectorSearchResult(referenceCaseId, m.score());
+                })
+                .filter(Objects::nonNull)
                 .toList();
     }
 
