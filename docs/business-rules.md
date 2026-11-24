@@ -23,6 +23,7 @@
 - `FAILED` 상태에서 3번째 평가 시도가 실패하면 `DEAD`로 전이한다.
 - `AI_EVALUATED` 상태에서 개발자 검수가 완료되면 `HUMAN_REVIEWED`로 전이한다.
 - `AI_EVALUATED`, `HUMAN_REVIEWED`, `DEAD` 상태의 건은 자동 평가 대상으로 다시 실행하지 않는다.
+- 같은 요청 재전송은 동일한 라벨과 사유일 때만 멱등 재시도로 취급한다. 이미 검수된 건에 다른 값을 보내면 충돌로 거부한다.
 - `DEAD` 상태의 건은 자동 평가에서 영구 제외해 사람이 직접 검수하며, `PENDING`이나 `FAILED`로 되돌리는 역전이를 허용하지 않는다.
 
 
@@ -38,6 +39,7 @@
 - `ReferenceCase`에는 사람이 검증을 마친 사례만 등록한다.
 - `EvaluationCase`에서 `ReferenceCase`로의 승격은 개발자가 명시적으로 승인한 수동 작업으로만 실행한다.
 - `confidence`가 1.0이거나 판정이 `SUCCESS`인 경우를 포함해 어떤 조건에서도 자동 승격을 수행하지 않는다.
+- `ReferenceCase` ID는 원본 `EvaluationCase` ID를 그대로 사용해 1:1 관계와 재시도 멱등성을 보장한다.
 
 
 ### 참고 사례 초기 적재 규칙

@@ -1,46 +1,79 @@
 package evaluation.evaluationService.evaluation.application.service;
 
-import evaluation.evaluationService.evaluation.application.port.out.CommandEvaluationCasePort;
+import evaluation.evaluationService.evaluation.application.port.in.PromotionUseCase;
+import evaluation.evaluationService.evaluation.application.port.in.dto.IndexRetryResult;
+import evaluation.evaluationService.evaluation.application.port.out.PromotionOutboxPort;
+import evaluation.evaluationService.evaluation.application.port.out.QueryReferenceCasePort;
 import evaluation.evaluationService.evaluation.application.port.out.RetrieveReferenceCasePort;
-import evaluation.evaluationService.evaluation.application.port.out.CommandReferenceCasePort;
-import evaluation.evaluationService.evaluation.domain.model.EvaluationCase;
 import evaluation.evaluationService.evaluation.domain.model.ReferenceCase;
 import evaluation.evaluationService.evaluation.domain.model.enums.EvaluationLabel;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-public class ReferenceCasePromotionService {
+public class ReferenceCasePromotionService implements PromotionUseCase {
 
     private final RetrieveReferenceCasePort retrieveReferenceCasePort;
-    private final CommandEvaluationCasePort commandEvaluationCasePort;
-    private final CommandReferenceCasePort commandReferenceCasePort;
+    private final PromotionOutboxService promotionOutboxService;
+    private final QueryReferenceCasePort queryReferenceCasePort;
+    private final PromotionOutboxPort promotionOutboxPort;
 
 
-    @Transactional(rollbackFor = Exception.class)
-    public void promote(
-            EvaluationCase evaluationCase,
-            EvaluationLabel humanLabel,
-            String humanReason
-    ) {
-        evaluationCase.applyHumanReview(humanLabel, humanReason);
+    @Override
+    public IndexRetryResult promote(String evaluationCaseId, EvaluationLabel humanLabel, String humanReason) {
+        return promotionOutboxService.reviewAndQueue(evaluationCaseId, humanLabel, humanReason)
+                .map(promotionCaseId -> indexPending(List.of(promotionCaseId)))
+                .orElseGet(() -> new IndexRetryResult(0, 0));
+    }
 
-        ReferenceCase referenceCase = ReferenceCase.create(
-                evaluationCase.getEvaluationCaseId(), // evaluationCaseId == referenceCaseId
-                evaluationCase.getTargetTitle(),
-                evaluationCase.getSourceTitle(),
-                evaluationCase.getHumanLabel(),
-                evaluationCase.getHumanReason()
-        );
+    @Override
+    public IndexRetryResult retryPendingIndexing() {
+        return indexPending(promotionOutboxPort.loadPendingReferenceCaseIds());
+    }
 
-        // outbox 패턴 필요함
-        // save 는 isNew = true 강제함. 평가를 재수정하면 문제 생길수도 (근데 그건 Promote 역할이 아니라 다른 클래스기 처리하게 하면 됨)
-        commandReferenceCasePort.save(referenceCase);               // 1. CloudSQL: source of truth
-        commandEvaluationCasePort.update(evaluationCase);           // 2. EvaluationCase → HUMAN_REVIEWED
-        retrieveReferenceCasePort.index(List.of(referenceCase));    // 3. Qdrant: 색인
+    private IndexRetryResult indexPending(List<String> referenceCaseIds) {
+        if (referenceCaseIds.isEmpty()) return new IndexRetryResult(0, 0);
+
+        int indexed = 0;
+        int failed = 0;
+        for (ReferenceCase referenceCase : queryReferenceCasePort.loadByIds(referenceCaseIds)) {
+            String referenceCaseId = referenceCase.getReferenceCaseId();
+
+            try {
+                retrieveReferenceCasePort.index(List.of(referenceCase));
+
+            } catch (Exception e) {
+                log.error("ReferenceCase Qdrant indexing failed: referenceCaseId={}", referenceCaseId, e);
+                markFailedSafely(referenceCaseId, e.getClass().getSimpleName());
+                failed++;
+                continue;
+            }
+
+            try {
+                promotionOutboxPort.markIndexed(referenceCaseId);
+                indexed++;
+
+            } catch (Exception e) {
+                log.error("Qdrant indexing succeeded but failed to mark outbox as INDEXED: referenceCaseId={}", referenceCaseId, e);
+                failed++;
+            }
+        }
+
+        return new IndexRetryResult(indexed, failed);
+    }
+
+    private void markFailedSafely(String referenceCaseId, String failureType) {
+        try {
+            promotionOutboxPort.markFailed(referenceCaseId, failureType);
+
+        } catch (Exception markException) {
+
+            log.error("Failed to update promotion outbox status to FAILED: promotionCaseId={}", referenceCaseId, markException);
+        }
     }
 }

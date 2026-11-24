@@ -24,7 +24,7 @@
 - 평가 예외 분기: 처리 불가 메시지는 Kafka DLQ 토픽으로 발행한다. 단건 평가 실패는 나머지 건의 순회를 중단시키지 않는다.
 - 초기 적재: 관리자 HTTP 요청 → GCS CSV 읽기 → Cloud SQL `reference_cases` 저장 → Gemini 임베딩 → Qdrant 색인.
 - 재색인: 관리자 HTTP 요청 → Cloud SQL `reference_cases` 전체 조회 → Gemini 임베딩 → Qdrant 전체 재색인.
-- 승격: 관리자 HTTP 요청 → Cloud SQL `reference_cases` 반영과 Outbox 기록을 단일 트랜잭션으로 처리 → 별도 재처리 경로에서 Gemini 임베딩과 Qdrant 색인 비동기 동기화.
+- 사람 검수/승격: 관리자 HTTP 요청 → `AI_EVALUATED` 목록 조회 → 검수 POST에서 Cloud SQL `evaluation_cases`, `reference_cases`, Outbox를 단일 트랜잭션으로 반영 → 트랜잭션 밖에서 Gemini 임베딩과 Qdrant 색인 실행. 색인 실패는 Outbox에 남기고 관리자 재시도 API로 복구한다.
 
 
 ### 외부 의존성과 경계

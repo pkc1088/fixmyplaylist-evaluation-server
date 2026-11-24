@@ -145,6 +145,15 @@ public class EvaluationCase {
             EvaluationLabel humanLabel,
             String humanReason
     ) {
+        if (this.evaluationStatus != EvaluationStatus.AI_EVALUATED) {
+            throw new IllegalStateException("Only AI_EVALUATED cases can be human reviewed");
+        }
+        if (humanLabel == null) {
+            throw new IllegalArgumentException("HumanLabel cannot be null");
+        }
+        if (humanReason == null || humanReason.isBlank() || humanReason.length() > 4000) {
+            throw new IllegalArgumentException("HumanReason must contain 1 to 4000 characters");
+        }
         this.evaluationStatus = EvaluationStatus.HUMAN_REVIEWED;
         this.humanLabel = humanLabel;
         this.humanReason = humanReason;

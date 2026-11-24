@@ -34,3 +34,4 @@
 - 스키마 변경 반영 순서: 운영 Cloud SQL에 수동 DDL을 먼저 적용한 뒤 애플리케이션을 배포한다. 배포를 먼저 하면 신규 테이블이나 컬럼 참조 시 런타임 SQL 오류가 발생한다.
 - 임베딩 변경 및 색인 복구 순서: 임베딩 모델, 벡터 차원, 입력 텍스트 형식을 변경해 배포했거나 Qdrant 색인이 MySQL 원본과 어긋났을 때는 `setup/reindex`를 실행해 Qdrant 포인트 수와 Cloud SQL `reference_cases` 행 수를 맞춘다.
 - 초기 적재 부분 실패 복구: `setup/initial` 실행 중 실패하면 동일 엔드포인트를 재호출한다.
+- 승격 색인 실패 복구: `POST /api/admin/rag/promotion/indexing/retry`를 호출한다. 요청 기반 Cloud Run은 인스턴스가 0일 때 백그라운드 스케줄러가 실행되지 않으므로 이 API를 운영 재시도 진입점으로 사용한다. Qdrant 포인트 ID가 결정적이어서 재색인은 같은 포인트를 덮어쓴다.
