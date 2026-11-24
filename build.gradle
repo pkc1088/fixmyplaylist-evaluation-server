@@ -17,6 +17,7 @@ configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
+	mockitoAgent
 	all {
 		exclude group: 'commons-logging', module: 'commons-logging'
 	}
@@ -57,6 +58,10 @@ dependencies {
 	// GCS
 	implementation 'com.google.cloud:google-cloud-storage'
 	implementation platform('com.google.cloud:libraries-bom:26.86.0')
+	// codex mock
+	mockitoAgent('org.mockito:mockito-core') {
+		transitive = false
+	}
 }
 
 tasks.named('test') {
@@ -64,6 +69,9 @@ tasks.named('test') {
 		if (System.getProperty('tags') != null) {
 			includeTags System.getProperty('tags')
 		}
+	}
+	doFirst {
+		jvmArgs "-javaagent:${configurations.mockitoAgent.singleFile}"
 	}
 }
 
