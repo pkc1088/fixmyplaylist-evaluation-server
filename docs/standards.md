@@ -8,6 +8,7 @@
 
 - `adapter.in`은 `port.in`만 참조하며 `application.service`나 `adapter.out`을 직접 참조하지 않는다.
 - `application.service`는 `port.in`을 구현하고 `port.out`과 `domain`에만 의존한다.
+- `port.in` 반환 모델은 도메인 객체를 노출하지 않으며, 도메인에서 `port.in.dto`로의 변환은 `application.service`가 담당한다.
 - `adapter.out`은 `port.out`을 구현하며 다른 어댑터를 직접 호출하지 않는다.
 - `domain` 패키지는 JDK와 Lombok 외의 외부 라이브러리, JPA, Jackson 애노테이션을 임포트하지 않는다.
 - `jakarta.persistence`, Kafka 클라이언트, LangChain4j, Qdrant, GCS 타입은 `adapter.out`과 `infrastructure.config` 외부로 노출하지 않는다.

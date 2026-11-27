@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -31,7 +32,7 @@ public class PromotionOutboxService {
 
         if (evaluationCase.getEvaluationStatus() == EvaluationStatus.HUMAN_REVIEWED) {
             // 이미 검수됐지만 라벨이나 사유가 다르면 예외 던져서, 기존 검수 결과를 조용히 덮어쓰지 않도록 함.
-            if (evaluationCase.getHumanLabel() != humanLabel || !humanReason.equals(evaluationCase.getHumanReason())) {
+            if (evaluationCase.getHumanLabel() != humanLabel || !Objects.equals(evaluationCase.getHumanReason(), humanReason)) {
                 throw new IllegalStateException("EvaluationCase was already reviewed with different values");
             }
             // 타임아웃이나 네트워크 오류로 Qdrant 색인 실패 시, 같은 카드로 버튼을 한 번 더 눌렀을 때 오류를 뱉지 않고 이어서 처리.

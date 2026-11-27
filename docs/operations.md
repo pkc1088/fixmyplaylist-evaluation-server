@@ -11,7 +11,11 @@
 - 단위 테스트 포함 전체 빌드: `./gradlew build -Dtags=unit`
 - 실행 JAR 패키징: `./gradlew bootJar` 실행 시 `build/libs/app.jar`가 생성된다.
 - 컨테이너 통합 테스트: 로컬 `application.yml`과 Docker 컨테이너 인프라가 준비된 환경에서만 `./gradlew test -Dtags=integration`을 실행한다.
+- 통합 테스트 컴파일 검증: Docker를 사용할 수 없는 샌드박스 환경에서 통합 테스트 코드를 수정한 경우 테스트 실행 대신 `./gradlew compileTestJava`로 컴파일만 검증한다.
 - 실행 제약: `application.yml`이나 Docker가 없는 환경에서는 `-Dtags=integration`과 태그를 생략한 `./gradlew test`, `./gradlew build`를 실행하지 않는다. `build.gradle`은 `tags` 프로퍼티가 없으면 통합 테스트까지 모두 실행한다.
+- 에이전트 환경별 Gradle 실행 분기: Codex처럼 기본 `~/.gradle` 쓰기와 네트워크가 허용된 환경에서는 위 명령을 그대로 실행한다. Antigravity처럼 `$HOME/.gradle-sandbox`가 마운트되어 있고 외부 네트워크가 차단된 샌드박스에서는 모든 `./gradlew` 명령 앞에 `GRADLE_USER_HOME="$HOME/.gradle-sandbox"`를 붙이고 뒤에 `--no-daemon --offline` 옵션을 추가한다.
+    - 예시: `GRADLE_USER_HOME="$HOME/.gradle-sandbox" ./gradlew test -Dtags=unit --no-daemon --offline`
+- 캐시 무시 재실행: `build` 디렉터리가 개별 마운트된 샌드박스에서는 `./gradlew clean`을 실행하지 않는다. 테스트를 강제로 다시 실행해야 할 때는 `--rerun` 옵션을 붙여 실행한다.
 
 
 ### 환경 설정

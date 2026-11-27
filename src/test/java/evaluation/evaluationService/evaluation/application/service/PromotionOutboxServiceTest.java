@@ -4,6 +4,7 @@ import evaluation.evaluationService.evaluation.application.port.out.CommandEvalu
 import evaluation.evaluationService.evaluation.application.port.out.CommandReferenceCasePort;
 import evaluation.evaluationService.evaluation.application.port.out.PromotionOutboxPort;
 import evaluation.evaluationService.evaluation.application.port.out.QueryEvaluationCasePort;
+import evaluation.evaluationService.evaluation.domain.exception.EvaluationCaseNotFoundException;
 import evaluation.evaluationService.evaluation.domain.model.EvaluationCase;
 import evaluation.evaluationService.evaluation.domain.model.ReferenceCase;
 import evaluation.evaluationService.evaluation.domain.model.enums.EvaluationLabel;
@@ -32,7 +33,6 @@ class PromotionOutboxServiceTest {
     @Mock private PromotionOutboxPort promotionOutboxPort;
 
     @InjectMocks private PromotionOutboxService service;
-
 
     @Test
     void reviewAndQueueReviewsEvaluationAndQueuesReferenceUsingSameId() {
@@ -86,7 +86,11 @@ class PromotionOutboxServiceTest {
         when(queryEvaluationCasePort.loadById("case-3")).thenReturn(evaluationCase);
 
         assertThrows(IllegalStateException.class,
-                () -> service.reviewAndQueue("case-3", EvaluationLabel.FAIL, "새 근거"));
+                () -> service.reviewAndQueue("case-3", EvaluationLabel.FAIL, "기존 근거"));
+        assertThrows(IllegalStateException.class,
+                () -> service.reviewAndQueue("case-3", EvaluationLabel.SUCCESS, "새 근거"));
+        assertThrows(IllegalStateException.class,
+                () -> service.reviewAndQueue("case-3", EvaluationLabel.SUCCESS, null));
 
         verifyNoInteractions(commandReferenceCasePort, commandEvaluationCasePort, promotionOutboxPort);
         assertEquals(EvaluationLabel.SUCCESS, evaluationCase.getHumanLabel());
@@ -95,13 +99,44 @@ class PromotionOutboxServiceTest {
 
     @Test
     void reviewOfCaseNotInAiEvaluatedStateIsRejected() {
-        EvaluationCase evaluationCase = EvaluationCase.createPending("case-4", "Target title", "Source title");
+        EvaluationCase pending = EvaluationCase.createPending("case-pending", "Target title", "Source title");
+        EvaluationCase failed = EvaluationCase.createPending("case-failed", "Target title", "Source title");
+        failed.handleFailure();
+        EvaluationCase dead = EvaluationCase.createPending("case-dead", "Target title", "Source title");
+        dead.handleFailure();
+        dead.handleFailure();
+        dead.handleFailure();
 
-        when(queryEvaluationCasePort.loadById("case-4"))
-                .thenReturn(evaluationCase);
+        when(queryEvaluationCasePort.loadById("case-pending")).thenReturn(pending);
+        when(queryEvaluationCasePort.loadById("case-failed")).thenReturn(failed);
+        when(queryEvaluationCasePort.loadById("case-dead")).thenReturn(dead);
 
         assertThrows(IllegalStateException.class,
-                () -> service.reviewAndQueue("case-4", EvaluationLabel.FAIL, "사람 판단"));
+                () -> service.reviewAndQueue("case-pending", EvaluationLabel.FAIL, "사람 판단"));
+        assertThrows(IllegalStateException.class,
+                () -> service.reviewAndQueue("case-failed", EvaluationLabel.FAIL, "사람 판단"));
+        assertThrows(IllegalStateException.class,
+                () -> service.reviewAndQueue("case-dead", EvaluationLabel.FAIL, "사람 판단"));
+
+        verifyNoInteractions(commandReferenceCasePort, commandEvaluationCasePort, promotionOutboxPort);
+    }
+
+    @Test
+    void rejectsInvalidReviewInputsAndMissingCaseWithoutMutatingPorts() {
+        when(queryEvaluationCasePort.loadById("missing"))
+                .thenThrow(new EvaluationCaseNotFoundException("missing"));
+        assertThrows(EvaluationCaseNotFoundException.class,
+                () -> service.reviewAndQueue("missing", EvaluationLabel.SUCCESS, "근거"));
+
+        EvaluationCase aiEvaluated = aiEvaluatedCase("case-invalid");
+        when(queryEvaluationCasePort.loadById("case-invalid")).thenReturn(aiEvaluated);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.reviewAndQueue("case-invalid", null, "근거"));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.reviewAndQueue("case-invalid", EvaluationLabel.SUCCESS, " "));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.reviewAndQueue("case-invalid", EvaluationLabel.SUCCESS, "r".repeat(4001)));
 
         verifyNoInteractions(commandReferenceCasePort, commandEvaluationCasePort, promotionOutboxPort);
     }

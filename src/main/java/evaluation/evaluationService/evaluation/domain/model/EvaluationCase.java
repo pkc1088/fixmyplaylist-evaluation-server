@@ -117,6 +117,9 @@ public class EvaluationCase {
     }
 
     public void handleFailure() {
+        if (this.evaluationStatus != EvaluationStatus.PENDING && this.evaluationStatus != EvaluationStatus.FAILED) {
+            throw new IllegalStateException("Only PENDING or FAILED cases can handle evaluation failure");
+        }
         if (this.retryCount >= MAX_RETRY_COUNT - 1) {
             this.evaluationStatus = EvaluationStatus.DEAD;
         } else {
@@ -132,6 +135,9 @@ public class EvaluationCase {
             Double aiConfidence,
             List<ReferenceTrace> retrievedReferenceIds
     ) {
+        if (this.evaluationStatus != EvaluationStatus.PENDING && this.evaluationStatus != EvaluationStatus.FAILED) {
+            throw new IllegalStateException("Only PENDING or FAILED cases can apply AI evaluation");
+        }
         this.aiLabel = aiLabel;
         this.aiConfidence = aiConfidence;
         this.evaluationStatus = EvaluationStatus.AI_EVALUATED;

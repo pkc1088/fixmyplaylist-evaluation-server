@@ -25,6 +25,7 @@ public class ReferenceCase {
     private static final int MAX_REFERENCE_CASE_ID_LENGTH = 100;
     private static final int MAX_TARGET_TITLE_LENGTH = 255;
     private static final int MAX_SOURCE_TITLE_LENGTH = 255;
+    private static final int MAX_HUMAN_REASON_LENGTH = 4000;
 
     public static final int RAG_TOP_K = 5;
 
@@ -65,6 +66,9 @@ public class ReferenceCase {
         }
         if (this.humanLabel == null) {
             throw new IllegalArgumentException("HumanLabel cannot be null");
+        }
+        if (humanReason == null || humanReason.isBlank() || humanReason.length() > MAX_HUMAN_REASON_LENGTH) {
+            throw new IllegalArgumentException("HumanReason must contain 1 to 4000 characters");
         }
     }
 

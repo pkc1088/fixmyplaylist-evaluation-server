@@ -38,7 +38,7 @@ class GeminiEvaluatorAdapterTest {
     @Captor private ArgumentCaptor<ChatRequest> chatRequestCaptor;
 
     @Test
-    void parsesFixedJsonAndSendsCurrentCaseAndHumanReviewedExamples() {
+    void parsesFixedJsonAndSendsCurrentCaseAndHumanReviewedExamplesWithoutSimilarityScore() {
         when(chatModel.chat(any(ChatRequest.class)))
                 .thenReturn(ChatResponse.builder()
                         .aiMessage(AiMessage.from("{\"label\":\"SUCCESS\",\"confidence\":0.93}"))
@@ -47,7 +47,7 @@ class GeminiEvaluatorAdapterTest {
         EvaluationCase evaluationCase = EvaluationCase.createPending("event-1", "Current target", "Current source");
         ReferenceCase referenceCase = ReferenceCase.create("reference-1", "Example target", "Example source", EvaluationLabel.FAIL, "Human reason");
 
-        EvaluationResult result = adapter.evaluateWithRag(evaluationCase, List.of(new RetrievedCase(referenceCase, 0.9)));
+        EvaluationResult result = adapter.evaluateWithRag(evaluationCase, List.of(new RetrievedCase(referenceCase, 0.87654)));
 
         assertEquals(new EvaluationResult(EvaluationLabel.SUCCESS, 0.93), result);
         verify(chatModel).chat(chatRequestCaptor.capture());
@@ -59,6 +59,31 @@ class GeminiEvaluatorAdapterTest {
         assertTrue(prompt.contains("Example source"));
         assertTrue(prompt.contains("Human Label: FAIL"));
         assertTrue(prompt.contains("Human Reason: Human reason"));
+        assertFalse(prompt.contains("0.87654"));
+    }
+
+    @Test
+    void formatsMultipleRetrievedExamplesInOrder() {
+        when(chatModel.chat(any(ChatRequest.class)))
+                .thenReturn(ChatResponse.builder()
+                        .aiMessage(AiMessage.from("{\"label\":\"SUCCESS\",\"confidence\":0.81}"))
+                        .build());
+
+        EvaluationCase evaluationCase = EvaluationCase.createPending("event-multi", "Target", "Source");
+        ReferenceCase first = ReferenceCase.create("ref-1", "First target", "First source", EvaluationLabel.SUCCESS, "First reason");
+        ReferenceCase second = ReferenceCase.create("ref-2", "Second target", "Second source", EvaluationLabel.FAIL, "Second reason");
+
+        adapter.evaluateWithRag(evaluationCase, List.of(
+                new RetrievedCase(first, 0.95123),
+                new RetrievedCase(second, 0.74321)));
+
+        verify(chatModel).chat(chatRequestCaptor.capture());
+        String prompt = extractPromptText(chatRequestCaptor.getValue());
+        assertTrue(prompt.indexOf("First target") < prompt.indexOf("Second target"));
+        assertTrue(prompt.contains("Human Reason: First reason"));
+        assertTrue(prompt.contains("Human Reason: Second reason"));
+        assertFalse(prompt.contains("0.95123"));
+        assertFalse(prompt.contains("0.74321"));
     }
 
     @Test
@@ -91,6 +116,18 @@ class GeminiEvaluatorAdapterTest {
     }
 
     @Test
+    void throwsWhenModelReturnsEmptyResponse() {
+        when(chatModel.chat(any(ChatRequest.class)))
+                .thenReturn(ChatResponse.builder()
+                        .aiMessage(AiMessage.from(""))
+                        .build());
+
+        EvaluationCase evaluationCase = EvaluationCase.createPending("event-empty", "Target", "Source");
+
+        assertThrows(RuntimeException.class, () -> adapter.evaluateWithRag(evaluationCase, List.of()));
+    }
+
+    @Test
     void throwsWhenModelReturnsUnknownLabel() {
         when(chatModel.chat(any(ChatRequest.class)))
                 .thenReturn(ChatResponse.builder()
@@ -100,6 +137,19 @@ class GeminiEvaluatorAdapterTest {
         EvaluationCase evaluationCase = EvaluationCase.createPending("event-4", "Target", "Source");
 
         assertThrows(RuntimeException.class, () -> adapter.evaluateWithRag(evaluationCase, List.of()));
+    }
+
+    @Test
+    void propagatesChatModelException() {
+        when(chatModel.chat(any(ChatRequest.class)))
+                .thenThrow(new IllegalStateException("gemini timeout"));
+
+        EvaluationCase evaluationCase = EvaluationCase.createPending("event-5", "Target", "Source");
+
+        IllegalStateException thrown = assertThrows(
+                IllegalStateException.class,
+                () -> adapter.evaluateWithRag(evaluationCase, List.of()));
+        assertEquals("gemini timeout", thrown.getMessage());
     }
 
     private String extractPromptText(ChatRequest request) {

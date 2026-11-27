@@ -5,9 +5,9 @@
 - RAG 및 LLM 평가 실행: `POST /api/admin/rag/evaluate/pending` 기준 신규 및 이전 실패 건 합산 순회, 건별 격리 실행, Gemini 임베딩, Qdrant 상위 5건 검색, Gemini 판정, 최대 3회 재시도와 `DEAD` 전이. 구현 완료, 단위 테스트 검증 완료.
 - 참고 사례 초기 적재 및 재색인: `POST /api/admin/rag/setup/initial`의 GCS 또는 클래스패스 CSV 적재와 `POST /api/admin/rag/setup/reindex`의 MySQL 기반 Qdrant 전체 재색인. 구현 완료, 단위 테스트 검증 완료.
 - 사람 검수/승격: `/admin-review.html` UI, 인증된 검수 대기 목록 GET, `human_label`/`human_reason` POST, EvaluationCase 상태 전이, ReferenceCase 저장, Outbox 기반 Qdrant 색인과 관리자 재시도 경로를 구현. 단위 테스트 검증 완료.
+- 전체 계층 단위 테스트 및 도메인 가드 보완: `EvaluationCase` 상태 역전 가드, `ReferenceCase`/`PromotionOutboxService` `humanReason` 검증 추가, 도메인·서비스·어댑터(웹/예외 핸들러 포함)·필터 단위 테스트 보완 및 `./gradlew test -Dtags=unit` 검증 완료.
 
 
 ### 남은 것
 
-- 나머지 도메인, 서비스, 어댑터 단위 테스트 작성 및 `./gradlew test -Dtags=unit` 검증 통과.
 - 컨테이너 기반 통합 테스트 작성 및 로컬 Docker 환경에서 `./gradlew test -Dtags=integration` 검증 통과.

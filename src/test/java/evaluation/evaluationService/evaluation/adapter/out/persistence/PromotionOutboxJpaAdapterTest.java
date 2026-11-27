@@ -27,9 +27,18 @@ class PromotionOutboxJpaAdapterTest {
 
         ArgumentCaptor<PromotionOutboxJpaEntity> captor = ArgumentCaptor.forClass(PromotionOutboxJpaEntity.class);
         verify(repository).save(captor.capture());
-        assertEquals("reference-1", captor.getValue().getReferenceCaseId());
-        assertEquals(PromotionOutboxJpaEntity.Status.PENDING, captor.getValue().getStatus());
-        assertTrue(captor.getValue().isNew());
+        PromotionOutboxJpaEntity saved = captor.getValue();
+        assertEquals("reference-1", saved.getReferenceCaseId());
+        assertEquals("reference-1", saved.getId());
+        assertEquals(PromotionOutboxJpaEntity.Status.PENDING, saved.getStatus());
+        assertEquals(0, saved.getAttempts());
+        assertTrue(saved.isNew());
+
+        saved.prePersist();
+        assertNotNull(saved.getCreatedAt());
+        assertNotNull(saved.getUpdatedAt());
+        saved.markNotNew();
+        assertFalse(saved.isNew());
     }
 
     @Test
@@ -73,9 +82,44 @@ class PromotionOutboxJpaAdapterTest {
         adapter.markFailed("missing", "VectorException");
 
         assertEquals(PromotionOutboxJpaEntity.Status.INDEXED, indexed.getStatus());
+        assertNotNull(indexed.getUpdatedAt());
         assertEquals(PromotionOutboxJpaEntity.Status.FAILED, failed.getStatus());
         assertEquals(1, failed.getAttempts());
         assertEquals("VectorException", failed.getLastFailureType());
+        assertNotNull(failed.getUpdatedAt());
+    }
+
+    @Test
+    void markFailedAccumulatesAttemptsAndDoesNotOverwriteIndexedStatus() {
+        PromotionOutboxJpaEntity retrying = outbox("retrying", PromotionOutboxJpaEntity.Status.PENDING);
+        PromotionOutboxJpaEntity alreadyIndexed = outbox("done", PromotionOutboxJpaEntity.Status.INDEXED);
+        when(repository.findById("retrying")).thenReturn(Optional.of(retrying));
+        when(repository.findById("done")).thenReturn(Optional.of(alreadyIndexed));
+
+        adapter.markFailed("retrying", "TimeoutException");
+        adapter.markFailed("retrying", "StatusRuntimeException");
+        adapter.markFailed("done", "LateFailure");
+
+        assertEquals(PromotionOutboxJpaEntity.Status.FAILED, retrying.getStatus());
+        assertEquals(2, retrying.getAttempts());
+        assertEquals("StatusRuntimeException", retrying.getLastFailureType());
+
+        assertEquals(PromotionOutboxJpaEntity.Status.INDEXED, alreadyIndexed.getStatus());
+        assertEquals(0, alreadyIndexed.getAttempts());
+        assertNull(alreadyIndexed.getLastFailureType());
+    }
+
+    @Test
+    void markIndexedClearsPreviousFailureType() {
+        PromotionOutboxJpaEntity failed = outbox("recovered", PromotionOutboxJpaEntity.Status.PENDING);
+        failed.markFailed("VectorException");
+        when(repository.findById("recovered")).thenReturn(Optional.of(failed));
+
+        adapter.markIndexed("recovered");
+
+        assertEquals(PromotionOutboxJpaEntity.Status.INDEXED, failed.getStatus());
+        assertNull(failed.getLastFailureType());
+        assertNotNull(failed.getUpdatedAt());
     }
 
     private PromotionOutboxJpaEntity outbox(String id, PromotionOutboxJpaEntity.Status status) {

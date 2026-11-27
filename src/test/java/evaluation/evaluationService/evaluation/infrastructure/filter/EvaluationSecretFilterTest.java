@@ -15,8 +15,36 @@ class EvaluationSecretFilterTest {
     private final EvaluationSecretFilter filter = new EvaluationSecretFilter("expected-secret");
 
     @Test
-    void blocksAdminRequestWithMissingOrIncorrectSecret() throws Exception {
+    void blocksAdminRequestWhenSecretHeaderIsMissing() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/admin/rag/promote/1");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(403, response.getStatus());
+        assertEquals("Invalid Secret Key", response.getContentAsString());
+        verifyNoInteractions(chain);
+    }
+
+    @Test
+    void blocksAdminRequestWhenSecretHeaderDoesNotMatch() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/admin/rag/evaluate/pending");
+        request.addHeader("X-Evaluation-Secret", "wrong-secret");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(403, response.getStatus());
+        assertEquals("Invalid Secret Key", response.getContentAsString());
+        verifyNoInteractions(chain);
+    }
+
+    @Test
+    void blocksAdminRequestWhenSecretHeaderIsEmpty() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/admin/rag/review/pending");
+        request.addHeader("X-Evaluation-Secret", "");
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain chain = mock(FilterChain.class);
 

@@ -25,7 +25,6 @@ class ReferenceCaseJpaAdapterTest {
     @InjectMocks private ReferenceCaseJpaAdapter adapter;
     @Captor private ArgumentCaptor<List<ReferenceCaseJpaEntity>> entitiesCaptor;
 
-
     @Test
     void saveAllMarksNewAndExistingIdsForUpsert() {
         ReferenceCase newCase = reference("new-id");
@@ -50,6 +49,35 @@ class ReferenceCaseJpaAdapterTest {
         adapter.saveAll(List.of());
 
         verifyNoInteractions(repository, mapper);
+    }
+
+    @Test
+    void saveAndUpdatePassDistinctIsNewFlagsToMapper() {
+        ReferenceCase domain = reference("ref-1");
+        ReferenceCaseJpaEntity newEntity = entity("ref-1");
+        ReferenceCaseJpaEntity updatedEntity = entity("ref-1");
+
+        when(mapper.toEntity(domain, true)).thenReturn(newEntity);
+        when(mapper.toEntity(domain, false)).thenReturn(updatedEntity);
+
+        adapter.save(domain);
+        adapter.update(domain);
+
+        verify(repository).save(newEntity);
+        verify(repository).save(updatedEntity);
+    }
+
+    @Test
+    void loadByIdsAndLoadAllMapEntitiesToDomain() {
+        ReferenceCaseJpaEntity entity = entity("ref-2");
+        ReferenceCase domain = reference("ref-2");
+
+        when(repository.findAllById(List.of("ref-2"))).thenReturn(List.of(entity));
+        when(repository.findAll()).thenReturn(List.of(entity));
+        when(mapper.toDomain(entity)).thenReturn(domain);
+
+        assertEquals(List.of(domain), adapter.loadByIds(List.of("ref-2")));
+        assertEquals(List.of(domain), adapter.loadAll());
     }
 
     private ReferenceCase reference(String id) {

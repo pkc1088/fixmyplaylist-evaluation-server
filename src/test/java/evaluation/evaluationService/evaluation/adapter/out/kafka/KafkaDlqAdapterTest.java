@@ -38,7 +38,7 @@ class KafkaDlqAdapterTest {
     }
 
     @Test
-    void throwsWhenPublishingFails() {
+    void throwsWhenPublishingFailsAsynchronously() {
         CompletableFuture<SendResult<String, String>> failed =
                 CompletableFuture.failedFuture(new IllegalStateException("broker unavailable"));
 
@@ -53,5 +53,15 @@ class KafkaDlqAdapterTest {
         }
         assertInstanceOf(IllegalStateException.class, root);
         assertEquals("broker unavailable", root.getMessage());
+    }
+
+    @Test
+    void throwsWhenKafkaTemplateThrowsSynchronously() {
+        IllegalStateException cause = new IllegalStateException("serialization error");
+        when(kafkaTemplate.send("dead-letter", "raw payload")).thenThrow(cause);
+
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> adapter.sendToDlq("raw payload"));
+
+        assertSame(cause, thrown.getCause());
     }
 }

@@ -47,6 +47,17 @@ class ReferenceCaseSetupServiceTest {
     }
 
     @Test
+    void doesNotIndexWhenDatabaseSaveFails() throws Exception {
+        List<ReferenceCase> cases = List.of(reference("1"));
+        when(csvPort.read()).thenReturn(cases);
+        doThrow(new IllegalStateException("db down")).when(commandReferenceCasePort).saveAll(cases);
+
+        assertThrows(IllegalStateException.class, () -> service.loadCsvAndInitialize());
+
+        verifyNoInteractions(retrieveReferenceCasePort);
+    }
+
+    @Test
     void wrapsCsvReadFailuresAndDoesNotWriteOrIndex() throws Exception {
         IOException cause = new IOException("unavailable");
         when(csvPort.read()).thenThrow(cause);
@@ -67,6 +78,19 @@ class ReferenceCaseSetupServiceTest {
                 () -> service.loadCsvAndInitialize());
 
         assertSame(cause, thrown.getCause());
+    }
+
+    @Test
+    void reindexAllFromDatabaseLoadsAllReferencesAndIndexesThem() {
+        List<ReferenceCase> all = List.of(reference("1"), reference("2"));
+        when(queryReferenceCasePort.loadAll()).thenReturn(all);
+
+        service.reindexAllFromDatabase();
+
+        InOrder order = inOrder(queryReferenceCasePort, retrieveReferenceCasePort);
+        order.verify(queryReferenceCasePort).loadAll();
+        order.verify(retrieveReferenceCasePort).index(all);
+        verifyNoInteractions(csvPort, commandReferenceCasePort);
     }
 
     private ReferenceCase reference(String id) {
