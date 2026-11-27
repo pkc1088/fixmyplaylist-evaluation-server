@@ -25,13 +25,14 @@ class EvaluationCaseInboxServiceTest {
     @Test
     void savesValidEventAsPendingAndReturnsPortResult() {
         when(commandEvaluationCasePort.saveIdempotent(any(EvaluationCase.class)))
-                .thenReturn(true);
+                .thenReturn(true, false);
 
         assertTrue(service.saveToInboxIdempotent(new RecoveryCompletedEvent("event-1", "Target", "Source")));
+        assertFalse(service.saveToInboxIdempotent(new RecoveryCompletedEvent("event-1", "Target", "Source")));
 
         ArgumentCaptor<EvaluationCase> captor = ArgumentCaptor.forClass(EvaluationCase.class);
-        verify(commandEvaluationCasePort).saveIdempotent(captor.capture());
-        EvaluationCase saved = captor.getValue();
+        verify(commandEvaluationCasePort, times(2)).saveIdempotent(captor.capture());
+        EvaluationCase saved = captor.getAllValues().get(0);
         assertEquals("event-1", saved.getEvaluationCaseId());
         assertEquals("Target", saved.getTargetTitle());
         assertEquals("Source", saved.getSourceTitle());
@@ -44,5 +45,26 @@ class EvaluationCaseInboxServiceTest {
         assertFalse(service.saveToInboxIdempotent(new RecoveryCompletedEvent("  ", "Target", "Source")));
 
         verifyNoInteractions(commandEvaluationCasePort);
+    }
+
+    @Test
+    void throwsOnOverlongEventIdOrBlankTitlesSoCallerRoutesToDlq() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.saveToInboxIdempotent(new RecoveryCompletedEvent("a".repeat(101), "Target", "Source")));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.saveToInboxIdempotent(new RecoveryCompletedEvent("event-1", "  ", "Source")));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.saveToInboxIdempotent(new RecoveryCompletedEvent("event-1", "Target", "  ")));
+
+        verifyNoInteractions(commandEvaluationCasePort);
+    }
+
+    @Test
+    void updateEvaluationResultDelegatesToCommandPort() {
+        EvaluationCase evaluated = EvaluationCase.createPending("event-2", "Target", "Source");
+
+        service.updateEvaluationResult(evaluated);
+
+        verify(commandEvaluationCasePort).update(evaluated);
     }
 }

@@ -30,7 +30,6 @@ class ReferenceCasePromotionServiceTest {
 
     @InjectMocks private ReferenceCasePromotionService service;
 
-
     @Test
     void promoteQueuesAndIndexesWhenReviewIsNew() {
         ReferenceCase referenceCase = referenceCase("case-1");
@@ -45,6 +44,24 @@ class ReferenceCasePromotionServiceTest {
         assertEquals(new IndexRetryResult(1, 0), result);
         verify(retrieveReferenceCasePort).index(List.of(referenceCase));
         verify(promotionOutboxPort).markIndexed("case-1");
+    }
+
+    @Test
+    void promoteReturnsFailedCountAndMarksOutboxFailedWhenIndexingFails() {
+        ReferenceCase referenceCase = referenceCase("case-promote-fail");
+
+        when(promotionOutboxService.reviewAndQueue("case-promote-fail", EvaluationLabel.FAIL, "검수 근거"))
+                .thenReturn(Optional.of("case-promote-fail"));
+        when(queryReferenceCasePort.loadByIds(List.of("case-promote-fail")))
+                .thenReturn(List.of(referenceCase));
+        doThrow(new IllegalStateException("qdrant timeout"))
+                .when(retrieveReferenceCasePort).index(List.of(referenceCase));
+
+        IndexRetryResult result = service.promote("case-promote-fail", EvaluationLabel.FAIL, "검수 근거");
+
+        assertEquals(new IndexRetryResult(0, 1), result);
+        verify(promotionOutboxPort).markFailed("case-promote-fail", "IllegalStateException");
+        verify(promotionOutboxPort, never()).markIndexed(anyString());
     }
 
     @Test
@@ -102,7 +119,7 @@ class ReferenceCasePromotionServiceTest {
     }
 
     @Test
-    void retryContinuesAfterOneCaseFails() {
+    void retryContinuesAfterOneCaseFailsEvenIfMarkFailedAlsoThrows() {
         ReferenceCase failed = referenceCase("case-4");
         ReferenceCase successful = referenceCase("case-5");
 
@@ -112,6 +129,8 @@ class ReferenceCasePromotionServiceTest {
                 .thenReturn(List.of(failed, successful));
         doThrow(new RuntimeException("qdrant unavailable"))
                 .when(retrieveReferenceCasePort).index(List.of(failed));
+        doThrow(new IllegalStateException("db write failed"))
+                .when(promotionOutboxPort).markFailed("case-4", "RuntimeException");
 
         assertEquals(new IndexRetryResult(1, 1), service.retryPendingIndexing());
 

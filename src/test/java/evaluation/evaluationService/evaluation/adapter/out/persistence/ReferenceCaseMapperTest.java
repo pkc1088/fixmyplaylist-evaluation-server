@@ -20,12 +20,17 @@ class ReferenceCaseMapperTest {
         ReferenceCase mappedBack = mapper.toDomain(entity);
 
         assertTrue(entity.isNew());
+        assertEquals("reference-1", entity.getId());
         assertEquals("reference-1", mappedBack.getReferenceCaseId());
         assertEquals("Target", mappedBack.getTargetTitle());
         assertEquals("Source", mappedBack.getSourceTitle());
         assertEquals(EvaluationLabel.FAIL, mappedBack.getHumanLabel());
         assertEquals("Human reason", mappedBack.getHumanReason());
+        assertEquals(domain.getCreatedAt(), mappedBack.getCreatedAt());
         assertFalse(mapper.toEntity(domain, false).isNew());
+
+        entity.markNotNew();
+        assertFalse(entity.isNew());
     }
 
     @Test
